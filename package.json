@@ -1,0 +1,39 @@
+{
+  "name": "stremio-addon-boilerplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -r --parallel --stream dev",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format": "prettier ./packages --write .",
+    "build": "pnpm -r build",
+    "start": "pnpm -r start",
+    "prepare": "pnpm format && husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.5.0+sha512.11106a5916c7406fe4b8cb8e3067974b8728f47308a4f5ac5e850304afa6f57e2847d7950dfe78877d8d36bfb401d381c4215db3a4c3547ffa63c14333a6fa51",
+  "type": "module",
+  "engines": {
+    "node": ">=22.11.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.21.0",
+    "@types/node": "^22.13.5",
+    "@types/stremio-addon-sdk": "^1.6.11",
+    "eslint": "^9.21.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.3",
+    "globals": "^16.0.0",
+    "husky": "^9.1.7",
+    "prettier": "^3.5.2",
+    "syncpack": "^13.0.2",
+    "tsx": "^4.19.3",
+    "typescript-eslint": "^8.24.1",
+    "vitest": "^3.0.7"
+  }
+}
