@@ -1,0 +1,141 @@
+import { z } from "zod";
+
+const ItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["file", "folder"]),
+  size: z.number().optional(),
+  created_at: z.number().optional(),
+  mime_type: z.string().optional(),
+  transcode_status: z
+    .enum([
+      "not_applicable",
+      "running",
+      "finished",
+      "pending",
+      "good_as_is",
+      "error",
+      "fetch_pending",
+    ])
+    .optional(),
+  link: z.string().optional(),
+  stream_link: z.string().optional(),
+  virus_scan: z.enum(["ok", "infected", "error"]).optional(),
+});
+
+const BreadcrumbSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  parent_id: z.string().optional(),
+});
+
+export const PremiumizeFolderResponseSchema = z.object({
+  status: z.string(),
+  message: z.string().optional(),
+  content: z.array(ItemSchema),
+  breadcrumbs: z.array(BreadcrumbSchema).optional(),
+  name: z.string().optional(),
+  parent_id: z.string().optional(),
+  folder_id: z.string().optional(),
+});
+
+const API_BASE = "https://www.premiumize.me/api";
+export const premiumizeApi = async <T>(
+  path: string,
+  apiKey: string,
+  schema: z.ZodType<T>
+) => {
+  try {
+    const appendApiKey = (path.includes("?") ? "&" : "?") + `apikey=${apiKey}`;
+    const url = `${API_BASE}${path}${appendApiKey}`;
+
+    console.info(`[server] ${url}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch ${path}`);
+    }
+
+    const data = await res.json();
+
+    console.log(data);
+
+    // verify it matches the provided schema
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      throw new Error(`Failed to parse ${path}: ${result.error}`);
+    }
+
+    return result.data;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return undefined;
+};
+
+export const fetchFolder = async (apikey: string, id?: string) => {
+  try {
+    const res = await premiumizeApi<
+      z.infer<typeof PremiumizeFolderResponseSchema>
+    >(
+      `/folder/list?id=${id}&includebreadcrumbs=true`,
+      apikey,
+      PremiumizeFolderResponseSchema
+    );
+
+    return res;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return undefined;
+};
+
+const ItemDetailSchema = z.object({
+  id: z.string(),
+  user_id: z.number(),
+  customer_id: z.number(),
+  name: z.string(),
+  type: z.enum(["file", "folder"]),
+  size: z.number(),
+  created_at: z.number(),
+  folder_id: z.string(),
+  server_name: z.string(),
+  acodec: z.string(),
+  vcodec: z.string(),
+  link: z.string(),
+  mime_type: z.string(),
+  opensubtitles_hash: z.string(),
+  resx: z.string(),
+  resy: z.string(),
+  duration: z.string(),
+  transcode_status: z.enum([
+    "not_applicable",
+    "running",
+    "finished",
+    "pending",
+    "good_as_is",
+    "error",
+    "fetch_pending",
+  ]),
+  virus_scan: z.enum(["ok", "infected", "error"]),
+  stream_link: z.string(),
+  audio_track_names: z.array(z.string()),
+  bitrate: z.number().optional(),
+});
+
+export const itemDetails = async (apikey: string, id: string) => {
+  try {
+    const res = await premiumizeApi<z.infer<typeof ItemDetailSchema>>(
+      `/item/details?id=${id}`,
+      apikey,
+      ItemDetailSchema
+    );
+
+    return res;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return undefined;
+};

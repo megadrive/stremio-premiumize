@@ -26,21 +26,25 @@ export const manifestRouter: Router = Router({ mergeParams: true }).get(
 
     // if we have a configuration, make changes as necessary
     if (conf) {
-      const { name } = addonManifest;
       manifest = createManifest({
         ...addonManifest,
-        name: `${name} - configured with ${conf.variable1}`,
-        types: ["movie", "series", "channel"],
+        name: "Premiumize Catalogs and Search",
+        types: ["movie", "series"],
         logo: `${serverEnv.BASE_URL}/logo.png`,
-        resources: ["catalog", "meta", "stream", "subtitles"],
+        resources: ["catalog", "meta", "stream"],
         catalogs: [
           {
-            id: "catalog1",
+            id: "root",
+            type: "series",
+            name: "Premiumize",
+          },
+          {
+            id: "search",
             type: "movie",
-            name: "Movies",
-            extra: [{ name: "genre", options: ["Action", "Comedy"] }],
+            name: "Search",
           },
         ],
+        idPrefixes: ["premiumize:"],
       });
     }
 

@@ -51,7 +51,7 @@ export default function ConfigureForm() {
   } = useForm<Config>({
     resolver: zodResolver(ConfigSchema),
     defaultValues: {
-      variable1: "",
+      premiumizeApiKey: "",
     },
     mode: "onChange",
   });
@@ -69,14 +69,28 @@ export default function ConfigureForm() {
     <form onSubmit={onSubmit}>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          <label htmlFor="variable1">
-            Variable 1
-            <span className="text-red-500">{errors.variable1?.message}</span>
+          <label htmlFor="premiumizeApiKey">
+            Premiumize API Key
+            <span className="text-red-500">
+              {errors.premiumizeApiKey?.message}
+            </span>
+          </label>
+
+          <input
+            type="password"
+            {...register("premiumizeApiKey")}
+            className="border-2 border-gray-300 rounded-md p-2"
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="rootFolderId">
+            Root Folder ID
+            <span className="text-red-500">{errors.rootFolderId?.message}</span>
           </label>
 
           <input
             type="text"
-            {...register("variable1")}
+            {...register("rootFolderId")}
             className="border-2 border-gray-300 rounded-md p-2"
           />
         </div>

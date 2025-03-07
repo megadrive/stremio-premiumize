@@ -7,7 +7,10 @@ import { z } from "zod";
  * If you wanted to add stuff like a debrid apikey, for instance. You would add it here.
  */
 export const ConfigSchema = z.object({
-  variable1: z.string().min(1, { message: "Variable 1 is required" }),
+  premiumizeApiKey: z
+    .string()
+    .min(1, { message: "Premiumize API key is required" }),
+  rootFolderId: z.string().optional(),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 
