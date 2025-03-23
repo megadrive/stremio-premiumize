@@ -4,7 +4,7 @@ import { ConfigSchema, type Config, config } from "@stremio-addon/config";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-function generateInstallLinks(userConfig: Config):
+async function generateInstallLinks(userConfig: Config): Promise<
   | {
       /** encoded config */
       config: string;
@@ -13,11 +13,13 @@ function generateInstallLinks(userConfig: Config):
       /** install link for web */
       web: string;
     }
-  | undefined {
+  | undefined
+> {
   try {
-    const encodedConfig = config.encode(userConfig);
+    const encodedConfig = await config.encode(userConfig);
     // attempt to decode, if we can't then no bueno
-    if (!config.decode(encodedConfig)) {
+    const decoded = await config.decode(encodedConfig);
+    if (!decoded) {
       throw new Error("Invalid config");
     }
 
@@ -51,17 +53,17 @@ export default function ConfigureForm() {
   } = useForm<Config>({
     resolver: zodResolver(ConfigSchema),
     defaultValues: {
-      premiumizeApiKey: "",
+      variable1: "",
     },
     mode: "onChange",
   });
 
   const [configString, setConfigString] =
-    useState<ReturnType<typeof generateInstallLinks>>();
+    useState<Awaited<ReturnType<typeof generateInstallLinks>>>();
 
   // handle form submission
-  const onSubmit = handleSubmit((data) => {
-    const generated = generateInstallLinks(data);
+  const onSubmit = handleSubmit(async (data) => {
+    const generated = await generateInstallLinks(data);
     setConfigString(generated);
   });
 
@@ -69,28 +71,14 @@ export default function ConfigureForm() {
     <form onSubmit={onSubmit}>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          <label htmlFor="premiumizeApiKey">
-            Premiumize API Key
-            <span className="text-red-500">
-              {errors.premiumizeApiKey?.message}
-            </span>
-          </label>
-
-          <input
-            type="password"
-            {...register("premiumizeApiKey")}
-            className="border-2 border-gray-300 rounded-md p-2"
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <label htmlFor="rootFolderId">
-            Root Folder ID
-            <span className="text-red-500">{errors.rootFolderId?.message}</span>
+          <label htmlFor="variable1">
+            Variable 1
+            <span className="text-red-500">{errors.variable1?.message}</span>
           </label>
 
           <input
             type="text"
-            {...register("rootFolderId")}
+            {...register("variable1")}
             className="border-2 border-gray-300 rounded-md p-2"
           />
         </div>

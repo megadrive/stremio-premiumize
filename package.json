@@ -1,12 +1,11 @@
 {
-  "name": "stremio-addon-boilerplate",
+  "name": "stremio-addon-starter",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel --stream dev",
-    "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier ./packages --write .",
     "build": "pnpm -r build",
@@ -16,7 +15,7 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "packageManager": "pnpm@10.5.0+sha512.11106a5916c7406fe4b8cb8e3067974b8728f47308a4f5ac5e850304afa6f57e2847d7950dfe78877d8d36bfb401d381c4215db3a4c3547ffa63c14333a6fa51",
+  "packageManager": "pnpm@10.6.4+sha512.da3d715bfd22a9a105e6e8088cfc7826699332ded60c423b14ec613a185f1602206702ff0fe4c438cb15c979081ce4cb02568e364b15174503a63c7a8e2a5f6c",
   "type": "module",
   "engines": {
     "node": ">=22.11.0"
@@ -33,7 +32,6 @@
     "prettier": "^3.5.2",
     "syncpack": "^13.0.2",
     "tsx": "^4.19.3",
-    "typescript-eslint": "^8.24.1",
-    "vitest": "^3.0.7"
+    "typescript-eslint": "^8.24.1"
   }
 }

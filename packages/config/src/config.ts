@@ -5,35 +5,23 @@ import { z } from "zod";
  * ? It gets encoded into a string and provided to the addon as a query parameter.
  *
  * If you wanted to add stuff like a debrid apikey, for instance. You would add it here.
+ *
+ * @configuration
  */
 export const ConfigSchema = z.object({
-  premiumizeApiKey: z
-    .string()
-    .min(1, { message: "Premiumize API key is required" }),
-  rootFolderId: z.string().optional(),
+  variable1: z.string().min(1, { message: "Variable 1 is required" }),
 });
 export type Config = z.infer<typeof ConfigSchema>;
-
-type EncoderFunc = (data: Config) => string;
-type DecoderFunc = (data: string) => Config;
-
-const builtinEncoder: EncoderFunc = (data) => btoa(JSON.stringify(data));
-const builtinDecoder: DecoderFunc = (data) => JSON.parse(atob(data));
 
 export const config = {
   /**
    * Decodes the config from a string.
    * @param data Datastring from a URL
-   * @param decoder a custom decoder function. By default, it decodes a base64 string to an object
    * @returns Config object or undefined if decoding failed
    */
-  decode: (data: string, decoder?: DecoderFunc): Config | undefined => {
-    if (decoder) {
-      return decoder(data);
-    }
-
+  decode: async (data: string): Promise<Config | undefined> => {
     try {
-      const decoded = builtinDecoder(data);
+      const decoded = JSON.parse(atob(data));
       const parsed = ConfigSchema.parse(decoded);
 
       return parsed;
@@ -47,14 +35,9 @@ export const config = {
   /**
    * Encodes the config into a string.
    * @param data Config object to encode
-   * @param encoder a custom encoder function. By default, it encodes a stringified object to base64
    * @returns Encoded string
    */
-  encode: (data: Config, encoder?: EncoderFunc): string => {
-    if (encoder) {
-      return encoder(data);
-    }
-
-    return builtinEncoder(data);
+  encode: async (data: Config): Promise<string> => {
+    return btoa(JSON.stringify(data));
   },
 };
