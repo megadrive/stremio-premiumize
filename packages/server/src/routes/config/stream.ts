@@ -30,7 +30,7 @@ streamRouter.get("/:type/:id", async (c) => {
       return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
     }
     const stream: Stream = {
-      title: item.name,
+      title: `${item.stream_link ? "⚡ " : ""}${item.name}`,
       url: item.stream_link ?? item.link,
       behaviorHints: {
         notWebReady: !testIsWebReady(item),
