@@ -83,7 +83,7 @@ streamRouter.get("/:type/:id", async (c) => {
     const error: Stream = {
       name: "Premiumize Library",
       title:
-        "No streamable files found,\nif you think this is an error,\nplease open an issue\non GitHub.",
+        "No streamable files found,\nif you think this is an error,\nplease open an issue\non GitHub by selecting this.",
       externalUrl: "https://github.com/megadrive/stremio-premiumize",
     };
     return c.json({ streams: [error] });
