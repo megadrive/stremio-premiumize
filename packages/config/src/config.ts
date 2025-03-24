@@ -9,7 +9,7 @@ import { z } from "zod";
  * @configuration
  */
 export const ConfigSchema = z.object({
-  variable1: z.string().min(1, { message: "Variable 1 is required" }),
+  premiumizeApiKey: z.string(),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 

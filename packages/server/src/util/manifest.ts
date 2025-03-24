@@ -1,3 +1,4 @@
+import { serverEnv } from "@stremio-addon/env";
 import type { Manifest } from "stremio-addon-sdk";
 
 /**
@@ -21,9 +22,7 @@ const manifestBase: Manifest = {
  * Create a new manifest.
  * NOTE: Remember that each "call" to your addon runs in isolation. There is no "app state" aside from the config sent in the URL.
  */
-export const createManifest = (
-  opts: Pick<Manifest, "id" | "name"> & Partial<Omit<Manifest, "id" | "name">>
-): Manifest => {
+export const createManifest = (opts: Partial<Manifest> = {}): Manifest => {
   return {
     ...manifestBase,
     ...opts,
@@ -37,7 +36,19 @@ export const createManifest = (
  * You can do cool things like dynamically create catalogs, or request certain resources. You do that in the line marked: @configurable-manifest
  */
 export const addonManifest = createManifest({
-  id: "org.your.addon.id",
-  name: "Stremio Addon Starter",
-  version: "0.0.0",
+  id: `${serverEnv.isDevelopment ? "dev." : ""}megadrive.premiumize-library`,
+  name: `Premiumize Library${serverEnv.isDevelopment ? " (dev)" : ""}`,
+  version: `1.0.0${serverEnv.isDevelopment ? "-dev" : ""}`,
+  description: "Access your Premiumize cloud library",
+  types: ["series"],
+  resources: ["meta", "catalog", "stream"],
+  catalogs: [
+    {
+      id: "library",
+      type: "series",
+      name: "Premiumize Library",
+      // TODO: Add searching
+    },
+  ],
+  idPrefixes: ["premiumize:"],
 });

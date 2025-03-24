@@ -1,31 +1,25 @@
 import { createRouter } from "@/util/createHono.js";
 import type { MetaDetail } from "stremio-addon-sdk";
-import { parseExtras } from "@/util/parseExtras.js";
+import { fetchFolder } from "@/lib/premiumize.js";
 
 export const catalogRouter = createRouter();
 
-catalogRouter.get("/:type/:id/:extras?.json", async (c) => {
-  const type = c.req.param("type");
-  const id = c.req.param("id");
-  const extras = c.req.param("extras");
+// id = "premiumize:id"
+catalogRouter.get("/:type/:id.json", async (c) => {
+  // fetch the folder contents
+  const folder = await fetchFolder(c.var.config.premiumizeApiKey);
 
-  const parsedExtras = parseExtras(extras);
-  console.info(`[${type}] ${id} with extras: ${JSON.stringify(parsedExtras)}`);
+  if (!folder) {
+    return c.json({ error: "Failed to fetch folder" });
+  }
 
-  const catalogExample: MetaDetail[] = [
-    {
-      id: "addonIdPrefix:123456",
-      name: "Stremio Addon Example",
-      type: "movie",
-      description: "This is an example meta response.",
-    },
-    {
-      id: "addonIdPrefix:78901",
-      name: "Stremio Addon Example 2",
-      type: "movie",
-      description: "This is another example meta response.",
-    },
-  ];
+  const metas: MetaDetail[] = folder.content.map((item) => {
+    return {
+      id: `premiumize:${item.id}`,
+      name: item.name,
+      type: item.type === "folder" ? "series" : "movie",
+    };
+  });
 
-  return c.json({ metas: catalogExample });
+  return c.json({ metas });
 });

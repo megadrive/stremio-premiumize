@@ -1,6 +1,7 @@
 import { createRouter } from "@/util/createHono.js";
-import { createManifest } from "@/util/manifest.js";
-import { serverEnv } from "@stremio-addon/env";
+import { addonManifest, createManifest } from "@/util/manifest.js";
+
+const SIX_MONTHS = 60 * 60 * 24 * 30 * 6;
 
 export const manifestRouter = createRouter();
 
@@ -14,14 +15,11 @@ export const manifestRouter = createRouter();
  * Search: @configuration in packages/config to change the configuration.
  */
 manifestRouter.get("/", async (c) => {
-  const config = c.var.config;
+  // just need to clone the object to avoid mutation, all config is in the `config` variable
+  const manifest = createManifest(addonManifest);
 
-  const manifest = createManifest({
-    id: "com.example.addon",
-    name: "Example Addon with config",
-    description: `Configured values: ${Object.keys(config).join(", ")}`,
-    version: `1.0.0${serverEnv.isDev ? "-dev" : ""}`,
-  });
+  // long-lived header
+  c.header("Cache-Control", `max-age: ${SIX_MONTHS}`);
 
   return c.json(manifest);
 });

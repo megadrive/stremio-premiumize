@@ -95,6 +95,9 @@ importers:
       stoker:
         specifier: ^1.4.2
         version: 1.4.2(@asteasolutions/zod-to-openapi@7.3.0(zod@3.24.2))(hono@4.7.4)(openapi3-ts@4.4.0)
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       "@types/node":
         specifier: ^22.13.5

@@ -78,7 +78,7 @@ export const fetchFolder = async (apikey: string, id?: string) => {
     const res = await premiumizeApi<
       z.infer<typeof PremiumizeFolderResponseSchema>
     >(
-      `/folder/list?id=${id}&includebreadcrumbs=true`,
+      `/folder/list?${id ? `id=${id}&` : ""}includebreadcrumbs=true`,
       apikey,
       PremiumizeFolderResponseSchema
     );
