@@ -41,13 +41,20 @@ export const addonManifest = createManifest({
   version: `1.0.0${serverEnv.isDevelopment ? "-dev" : ""}`,
   description: "Access your Premiumize cloud library",
   types: ["series"],
+  logo: "https://premiumize-library.almosteffective.com/logo.png",
   resources: ["meta", "catalog", "stream"],
   catalogs: [
     {
       id: "library",
-      type: "series",
+      // @ts-expect-error custom type
+      type: "premiumize",
       name: "Premiumize Library",
-      // TODO: Add searching
+      extra: [
+        {
+          name: "search",
+          isRequired: false,
+        },
+      ],
     },
   ],
   idPrefixes: ["premiumize:"],

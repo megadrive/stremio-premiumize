@@ -8,7 +8,7 @@ import { streamRouter } from "@/routes/config/stream.js";
 import { subtitleRouter } from "@/routes/config/subtitle.js";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { createAPIRouter, createApp, createRouter } from "@/util/createHono.js";
-import { exampleAPIRouter } from "@/routes/api/example.js";
+import { iconAPIRouter } from "@/routes/api/icon.js";
 
 const app = createApp();
 
@@ -40,7 +40,7 @@ configRouter.route("/subtitle", subtitleRouter);
 app.route("/:config", configRouter);
 
 const apiRouter = createAPIRouter();
-apiRouter.route("/example", exampleAPIRouter);
+apiRouter.route("/icon", iconAPIRouter);
 app.route("/api", apiRouter);
 
 serve(

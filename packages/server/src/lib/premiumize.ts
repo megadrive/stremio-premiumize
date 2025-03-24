@@ -139,3 +139,40 @@ export const itemDetails = async (apikey: string, id: string) => {
 
   return undefined;
 };
+
+const SearchItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["file", "folder"]),
+  size: z.number().optional(),
+  created_at: z.number().optional(),
+  mime_type: z.string().optional(),
+  link: z.string().optional(),
+  directlink: z.string().optional(),
+  stream_link: z.string().optional(),
+});
+const SearchFolderSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(["file", "folder"]),
+  created_at: z.number(),
+});
+const SearchSchema = z.object({
+  content: z.union([z.array(SearchItemSchema), z.array(SearchFolderSchema)]),
+  name: z.string(),
+});
+export const search = async (apikey: string, query: string) => {
+  try {
+    const res = await premiumizeApi<z.infer<typeof SearchSchema>>(
+      `/folder/search?q=${query}`,
+      apikey,
+      SearchSchema
+    );
+
+    return res;
+  } catch (error) {
+    console.error(error);
+  }
+
+  return undefined;
+};

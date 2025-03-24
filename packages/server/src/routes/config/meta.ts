@@ -1,5 +1,6 @@
 import { fetchFolder } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
+import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink } from "stremio-addon-sdk";
 
 // should match: /:config/meta/:type/:id/:extras?.json
@@ -58,7 +59,7 @@ metaRouter.get("/:type/:id", async (c) => {
     description: `Path: ${folder.breadcrumbs?.map((crumb) => crumb.name).join(" > ")}`,
     releaseInfo: `${folder.content.length} item${folder.content.length !== 1 ? "s" : ""}`,
     links,
-    type: "series",
+    type: addonManifest.types[0],
   };
 
   return c.json({ meta });
