@@ -46,19 +46,9 @@ importers:
 
   packages/config:
     dependencies:
-      react:
-        specifier: ^19.0.0
-        version: 19.0.0
-      shrink-string:
-        specifier: ^3.1.9
-        version: 3.1.9
       zod:
         specifier: ^3.24.2
         version: 3.24.2
-    devDependencies:
-      "@types/react":
-        specifier: ^19.0.10
-        version: 19.0.10
 
   packages/env:
     dependencies:
@@ -4024,13 +4014,6 @@ packages:
         integrity: sha512-njXuliz/cP+67jU2hukkxCNuH1yUi4QfdZZY+sMr5PPrIyXSu5iTb/qYC4BiWWB0vZ+7TbdvYUCeL23zpwCfbg==,
       }
 
-  shrink-string@3.1.9:
-    resolution:
-      {
-        integrity: sha512-fk1x3ovK1kaUotGCGO5Npv/7bKL8Qw7jkPUlqqPK/5U7vCr021SGkrkSu8BuBZxG0f/j4SqR2BN8gJcAtapfIg==,
-      }
-    engines: { node: ">=18.0.0" }
-
   signal-exit@4.1.0:
     resolution:
       {
@@ -7247,8 +7230,6 @@ snapshots:
       "@shikijs/types": 1.29.2
       "@shikijs/vscode-textmate": 10.0.2
       "@types/hast": 3.0.4
-
-  shrink-string@3.1.9: {}
 
   signal-exit@4.1.0: {}
 
