@@ -3,6 +3,10 @@ import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink } from "stremio-addon-sdk";
 
+function isVideoFile(name: string) {
+  return /\.(mp4|mkv|avi|mov|wmv|flv|webm|mpg|mpeg)$/i.test(name);
+}
+
 // should match: /:config/meta/:type/:id/:extras?.json
 // ex: /configexample/meta/movie/123456.json
 export const metaRouter = createRouter();
@@ -58,13 +62,13 @@ metaRouter.get("/:type/:id", async (c) => {
     videos.push(
       // @ts-expect-error including "title" key breaks the whole thing.
       ...folder.content
-        .filter((item) => item.type === "file")
+        .filter((item) => item.type === "file" && isVideoFile(item.name))
         .map((item, idx) => {
           return {
             id: `premiumize:${item.id}:tv`,
             // title: item.name,
             name: item.name,
-            season: 0,
+            season: 1,
             episode: idx + 1,
             released: new Date(item.created_at ?? Date.now()).toISOString(),
           };
