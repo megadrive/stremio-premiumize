@@ -26,21 +26,37 @@ metaRouter.get("/:type/:id", async (c) => {
     return c.json({ meta: {}, error: "Failed to fetch file info" }, 500);
   }
 
-  const links: MetaLink[] = folder.content
+  const links: MetaLink[] = [];
+
+  // if we are in a subfolder, add a link to the parent folder
+  if (folder.parent_id && folder.name !== "root") {
+    links.push({
+      name: "^ Up a directory",
+      category: "Navigation",
+      url: `stremio:///detail/series/premiumize:${folder.parent_id}`,
+    });
+  }
+
+  folder.content
     .filter((item) => item.type === "folder")
     .map((item) => {
       return {
         name: item.name,
-        category: "Subfolder",
-        url: `stremio:///detail/series/premiumize:${item.id}.json`,
+        category: "Navigation",
+        url: `stremio:///detail/series/premiumize:${item.id}`,
       };
-    });
+    })
+    .forEach((link) => links.push(link));
+
+  if (folder.name === "root") {
+    folder.name = "Premiumize Cloud";
+  }
 
   const meta: MetaDetail = {
     id: `premiumize:${folder.folder_id}`,
     name: folder.name ?? "Unknown",
     description: `Path: ${folder.breadcrumbs?.map((crumb) => crumb.name).join(" > ")}`,
-    releaseInfo: `${folder.content.length} items`,
+    releaseInfo: `${folder.content.length} item${folder.content.length !== 1 ? "s" : ""}`,
     links,
     type: "series",
   };
