@@ -8,7 +8,7 @@ import type { MetaDetail, MetaLink } from "stremio-addon-sdk";
 export const metaRouter = createRouter();
 
 metaRouter.get("/:type/:id", async (c) => {
-  const type = c.req.param("type");
+  // const type = c.req.param("type");
   const pid = c.req.param("id").split(".")[0];
 
   if (!pid) {
@@ -19,8 +19,6 @@ metaRouter.get("/:type/:id", async (c) => {
   if (!id) {
     return c.json({ error: "Invalid id" }, 500);
   }
-
-  console.info({ type, id });
 
   const folder = await fetchFolder(c.var.config.premiumizeApiKey, id);
   if (!folder) {
@@ -53,6 +51,27 @@ metaRouter.get("/:type/:id", async (c) => {
     folder.name = "Premiumize Cloud";
   }
 
+  const treatAsSeries = (folder.name ?? "").includes("#tv");
+  c.var.logger.info(`Treating as series? ${treatAsSeries}`);
+  const videos: MetaDetail["videos"] = [];
+  if (treatAsSeries) {
+    videos.push(
+      // @ts-expect-error including "title" key breaks the whole thing.
+      ...folder.content
+        .filter((item) => item.type === "file")
+        .map((item, idx) => {
+          return {
+            id: `premiumize:${item.id}:tv`,
+            // title: item.name,
+            name: item.name,
+            season: 0,
+            episode: idx + 1,
+            released: new Date(item.created_at ?? Date.now()).toISOString(),
+          };
+        })
+    );
+  }
+
   const meta: MetaDetail = {
     id: `premiumize:${folder.folder_id}`,
     name: folder.name ?? "Unknown",
@@ -60,6 +79,7 @@ metaRouter.get("/:type/:id", async (c) => {
     releaseInfo: `${folder.content.length} item${folder.content.length !== 1 ? "s" : ""}`,
     links,
     type: addonManifest.types[0],
+    videos,
   };
 
   return c.json({ meta });

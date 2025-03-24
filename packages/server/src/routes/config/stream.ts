@@ -1,19 +1,42 @@
-import { fetchFolder } from "@/lib/premiumize.js";
+import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import type { Stream, Subtitle } from "stremio-addon-sdk";
 
 export const streamRouter = createRouter();
 
+function testIsWebReady(item: { stream_link?: string | null }) {
+  return item.stream_link && item.stream_link.endsWith(".mp4");
+}
+
 streamRouter.get("/:type/:id", async (c) => {
+  // removes .json
   const pid = c.req.param("id").split(".")[0];
 
   if (!pid) {
     return c.json({ meta: {}, error: "Missing id" }, 500);
   }
 
-  const [, id] = pid.split(":");
+  // removes premiumize: prefix
+  const [, id, isTvShow] = pid.split(":");
   if (!id) {
     return c.json({ error: "Invalid id" }, 500);
+  }
+
+  // handle #tv shows
+  if (isTvShow && isTvShow.toLowerCase() === "tv") {
+    // fetch the item directly
+    const item = await itemDetails(c.var.config.premiumizeApiKey, id);
+    if (!item) {
+      return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
+    }
+    const stream: Stream = {
+      title: item.name,
+      url: item.stream_link ?? item.link,
+      behaviorHints: {
+        notWebReady: !testIsWebReady(item),
+      },
+    };
+    return c.json({ streams: [stream] });
   }
 
   const folder = await fetchFolder(c.var.config.premiumizeApiKey, id);
@@ -63,7 +86,7 @@ streamRouter.get("/:type/:id", async (c) => {
         return;
       }
 
-      const isWebReady = item.stream_link && item.stream_link.endsWith(".mp4");
+      const isWebReady = testIsWebReady(item);
 
       return {
         id: `premiumize:${item.id}`,
