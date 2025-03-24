@@ -2,7 +2,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ConfigSchema, type Config, config } from "@stremio-addon/config";
 import { useState } from "react";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 async function generateInstallLinks(userConfig: Config): Promise<
   | {
@@ -71,52 +73,39 @@ export default function ConfigureForm() {
     <form onSubmit={onSubmit}>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          <label htmlFor="variable1">
+          <Label htmlFor="variable1">
             Premiumize API Key
             <span className="text-red-500">
               {errors.premiumizeApiKey?.message}
             </span>
-          </label>
+          </Label>
 
-          <input
-            type="text"
+          <Input
+            type="password"
             {...register("premiumizeApiKey")}
             className="border-2 border-gray-300 rounded-md p-2"
           />
         </div>
-        <div>
-          <button
-            type="submit"
-            className={cn([
-              "bg-slate-500",
-              "hover:bg-slate-700",
-              "text-white",
-              "py-2",
-              "px-4",
-              "rounded",
-              "focus:outline-none",
-              "focus:shadow-outline",
-              "cursor-pointer",
-            ])}
-          >
+        <div className="text-center">
+          <Button type="submit" className="w-full sm:w-1/3">
             Submit
-          </button>
+          </Button>
         </div>
       </div>
       <div
-        className={`${configString && !formState.isDirty ? "" : "hidden"} flex flex-row gap-6`}
+        className={`${configString && !formState.isDirty ? "" : "hidden"} flex flex-row gap-6 justify-around pt-1`}
       >
-        <a
-          href={configString?.url ?? ""}
-          className="bg-slate-500 text-white p-2 rounded"
-        >
+        <Button onClick={() => window.open(configString?.url ?? "")}>
           Install
-        </a>
-        <a href={configString?.web ?? ""} className="p-2">
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => window.open(configString?.web ?? "")}
+        >
           Install (web)
-        </a>
-        <a
-          href="#"
+        </Button>
+        <Button
+          variant="outline"
           className="p-2"
           onClick={(e) => {
             e.preventDefault();
@@ -124,7 +113,7 @@ export default function ConfigureForm() {
           }}
         >
           Copy
-        </a>
+        </Button>
       </div>
     </form>
   );
