@@ -19,7 +19,7 @@ const ItemSchema = z.object({
     ])
     .optional(),
   link: z.string().optional(),
-  stream_link: z.string().optional(),
+  stream_link: z.string().nullable().optional(),
   virus_scan: z.enum(["ok", "infected", "error"]).optional(),
 });
 
@@ -103,7 +103,7 @@ const ItemDetailSchema = z.object({
   server_name: z.string(),
   acodec: z.string(),
   vcodec: z.string(),
-  link: z.string(),
+  link: z.string().optional(),
   mime_type: z.string(),
   opensubtitles_hash: z.string(),
   resx: z.string(),
@@ -119,7 +119,7 @@ const ItemDetailSchema = z.object({
     "fetch_pending",
   ]),
   virus_scan: z.enum(["ok", "infected", "error"]),
-  stream_link: z.string(),
+  stream_link: z.string().optional(),
   audio_track_names: z.array(z.string()),
   bitrate: z.number().optional(),
 });

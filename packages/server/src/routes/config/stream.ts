@@ -25,6 +25,15 @@ streamRouter.get("/:type/:id", async (c) => {
     .filter((item) => {
       return item.link || item.stream_link;
     })
+    .filter((item) => {
+      // remove non-video files
+      return (
+        item.type === "file" &&
+        ["mp4", "mov", "avi", "mkv", "webm", "wmv", "flv"].includes(
+          item.name.split(".").pop() ?? ""
+        )
+      );
+    })
     .map((item) => {
       // see if there's a subtitle file in the same folder with the same name
       const fileName = item.name.split(".").slice(0, -1).join(".");
@@ -67,6 +76,18 @@ streamRouter.get("/:type/:id", async (c) => {
       };
     })
     .filter((stream) => !!stream);
+
+  // if no streams, output an error that will open the github
+  if (streams.length === 0) {
+    c.var.logger.info("No streamable files found");
+    const error: Stream = {
+      name: "Premiumize Library",
+      title:
+        "No streamable files found,\nif you think this is an error,\nplease open an issue\non GitHub.",
+      externalUrl: "https://github.com/megadrive/stremio-premiumize",
+    };
+    return c.json({ streams: [error] });
+  }
 
   return c.json({ streams });
 });
