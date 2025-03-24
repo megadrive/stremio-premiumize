@@ -39,7 +39,8 @@ streamRouter.get("/:type/:id", async (c) => {
       const fileName = item.name.split(".").slice(0, -1).join(".");
       const subtitle = folder.content.find((file) => {
         const name = file.name.split(".").slice(0, -1).join(".");
-        if (name === fileName) {
+        console.info(`comparing ${fileName} with ${name}`);
+        if (file.id !== item.id && name === fileName) {
           return true;
         }
       });
