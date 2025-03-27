@@ -28,7 +28,7 @@ async function generateInstallLinks(userConfig: Config): Promise<
       throw new Error("Invalid config");
     }
 
-    const path = `/${encodedConfig}/manifest.json`;
+    const path = `/${encodedConfig.data}/manifest.json`;
 
     // if running locally in dev, use http, otherwise use Stremio protocol
     const protocol = window.location.origin.startsWith("http://localhost:4321")

@@ -5,6 +5,14 @@ import { addonManifest } from "@/util/manifest.js";
 
 export const catalogRouter = createRouter();
 
+function prependIconToItemName(name: string, type: "file" | "folder") {
+  const icon = type === "file" ? "📺" : "📂";
+  return {
+    name: `${icon} ${name}`,
+    icon,
+  };
+}
+
 // id = "premiumize:id"
 catalogRouter.get("/:type/:id.json", async (c) => {
   // fetch the folder contents
@@ -15,9 +23,11 @@ catalogRouter.get("/:type/:id.json", async (c) => {
   }
 
   const metas: MetaDetail[] = folder.content.map((item) => {
+    const { name } = prependIconToItemName(item.name, item.type);
+
     return {
       id: `premiumize:${item.id}`,
-      name: item.name,
+      name,
       type: addonManifest.types[0],
     };
   });
@@ -32,7 +42,7 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
     return c.json({ metas: [], error: "Missing search" });
   }
 
-  const [, q] = search.split("=");
+  const [, q] = search.replace(`.json$`, "").split("=");
 
   try {
     const results = await searchRemote(c.var.config.premiumizeApiKey, q);
@@ -41,11 +51,11 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
     }
 
     const metas: MetaDetail[] = results.content.map((item) => {
-      const icon = item.type === "file" ? "📺" : "📂";
+      const { name, icon } = prependIconToItemName(item.name, item.type);
 
       return {
         id: `premiumize:${item.id}`,
-        name: `${icon} ${item.name}`,
+        name,
         type: addonManifest.types[0],
         poster: `http://localhost:4321/api/icon/${icon}`,
         behaviourHints: {
