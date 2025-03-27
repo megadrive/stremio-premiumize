@@ -9,9 +9,13 @@ import { z } from "zod";
  * @configuration
  */
 export const ConfigSchema = z.object({
-  premiumizeApiKey: z.string(),
+  premiumizeApiKey: z
+    .string()
+    .min(1, "You must provide an API key for the addon to work"),
 });
 export type Config = z.infer<typeof ConfigSchema>;
+
+type Result<T> = { success: true; data: T } | { success: false; error: string };
 
 export const config = {
   /**
@@ -19,25 +23,36 @@ export const config = {
    * @param data Datastring from a URL
    * @returns Config object or undefined if decoding failed
    */
-  decode: async (data: string): Promise<Config | undefined> => {
+  decode: async (data: string): Promise<Result<Config>> => {
     try {
       const decoded = JSON.parse(atob(data));
       const parsed = ConfigSchema.parse(decoded);
 
-      return parsed;
+      return {
+        success: true,
+        data: parsed,
+      };
     } catch (e: unknown) {
       // @ts-expect-error Message exists on a parsing error.
-      console.error("Could not decode config", e?.message);
+      return { success: false, error: e.message };
     }
-
-    return undefined;
   },
   /**
    * Encodes the config into a string.
    * @param data Config object to encode
    * @returns Encoded string
    */
-  encode: async (data: Config): Promise<string> => {
-    return btoa(JSON.stringify(data));
+  encode: async (data: Config): Promise<Result<string>> => {
+    try {
+      const encoded = btoa(JSON.stringify(data));
+
+      return {
+        success: true,
+        data: encoded,
+      };
+    } catch (e: unknown) {
+      // @ts-expect-error Message exists on a parsing error.
+      return { success: false, error: e.message };
+    }
   },
 };

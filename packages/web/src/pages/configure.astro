@@ -1,15 +1,18 @@
 ---
 import ConfigureForm from "../components/ConfigureForm";
 import Layout from "../layouts/Layout.astro";
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
 ---
 
 <Layout>
-  <h1 class="text-3xl font-bold">Stremio Premiumize Library</h1>
+  <div class="w-full font-mono">
+    <div class="p-2 dark:bg-white dark:text-black bg-black text-white mb-3">
+      <h1 class="text-3xl font-bold text-center pb-3">
+        Stremio Premiumize Library
+      </h1>
 
-  <h2 class="text-xl">Get Configurin'</h2>
+      <h2 class="text-lg text-center">Your Premiumize Library in Stremio</h2>
+    </div>
 
-  <ConfigureForm client:load />
+    <ConfigureForm client:load />
+  </div>
 </Layout>

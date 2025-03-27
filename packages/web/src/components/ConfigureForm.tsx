@@ -19,15 +19,18 @@ async function generateInstallLinks(userConfig: Config): Promise<
 > {
   try {
     const encodedConfig = await config.encode(userConfig);
+    if (!encodedConfig.success) {
+      throw new Error("Invalid config");
+    }
     // attempt to decode, if we can't then no bueno
-    const decoded = await config.decode(encodedConfig);
-    if (!decoded) {
+    const decodeAttempt = await config.decode(encodedConfig.data);
+    if (!decodeAttempt.success) {
       throw new Error("Invalid config");
     }
 
     const path = `/${encodedConfig}/manifest.json`;
 
-    // if running locally in dev, use http, otherwise use stremio protocol
+    // if running locally in dev, use http, otherwise use Stremio protocol
     const protocol = window.location.origin.startsWith("http://localhost:4321")
       ? "http"
       : "stremio";
@@ -35,7 +38,7 @@ async function generateInstallLinks(userConfig: Config): Promise<
     const web = `https://web.stremio.com/#/addons?addon=${encodeURIComponent(url)}`;
 
     return {
-      config: encodedConfig,
+      config: encodedConfig.data,
       url,
       web,
     };
@@ -57,7 +60,6 @@ export default function ConfigureForm() {
     defaultValues: {
       premiumizeApiKey: "",
     },
-    mode: "onChange",
   });
 
   const [configString, setConfigString] =
@@ -73,18 +75,18 @@ export default function ConfigureForm() {
     <form onSubmit={onSubmit}>
       <div className="flex flex-col gap-1">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="variable1">
-            Premiumize API Key
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="premiumizeApiKey">Premiumize API Key</Label>
+
+            <Input
+              type="password"
+              {...register("premiumizeApiKey")}
+              className="border-2 border-gray-300 rounded-md p-2"
+            />
             <span className="text-red-500">
               {errors.premiumizeApiKey?.message}
             </span>
-          </Label>
-
-          <Input
-            type="password"
-            {...register("premiumizeApiKey")}
-            className="border-2 border-gray-300 rounded-md p-2"
-          />
+          </div>
         </div>
         <div className="text-center">
           <Button type="submit" className="w-full sm:w-1/3">
@@ -93,23 +95,33 @@ export default function ConfigureForm() {
         </div>
       </div>
       <div
-        className={`${configString && !formState.isDirty ? "" : "hidden"} flex flex-row gap-6 justify-around pt-1`}
+        className={`${configString && !formState.isDirty ? "" : "hidden"} flex flex-row md:gap-6 gap-1 pt-1 justify-around`}
       >
-        <Button onClick={() => window.open(configString?.url ?? "")}>
+        <Button
+          className="grow"
+          onClick={() =>
+            configString ? window.open(configString.url) : undefined
+          }
+        >
           Install
         </Button>
         <Button
           variant="secondary"
-          onClick={() => window.open(configString?.web ?? "")}
+          className="grow"
+          onClick={() =>
+            configString ? window.open(configString?.web) : undefined
+          }
         >
           Install (web)
         </Button>
         <Button
           variant="outline"
-          className="p-2"
+          className="grow"
           onClick={(e) => {
             e.preventDefault();
-            navigator.clipboard.writeText(configString?.url ?? "");
+            if (configString) {
+              navigator.clipboard.writeText(configString.url);
+            }
           }}
         >
           Copy
