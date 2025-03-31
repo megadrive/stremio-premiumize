@@ -1,5 +1,6 @@
 import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
+import { serverEnv } from "@stremio-addon/env";
 import type { Stream, Subtitle } from "stremio-addon-sdk";
 
 export const streamRouter = createRouter();
@@ -44,7 +45,22 @@ streamRouter.get("/:type/:id", async (c) => {
     return c.json({ meta: {}, error: "Failed to fetch folder" }, 500);
   }
 
-  const streams: Stream[] = folder.content
+  const folderStreams: Stream[] = [
+    {
+      title: "^ Up a directory",
+      externalUrl: `stremio:///detail/series/premiumize:${folder.parent_id}`,
+    },
+    ...folder.content
+      .filter((item) => item.type === "folder")
+      .map((item) => {
+        return {
+          externalUrl: `stremio:///detail/series/premiumize:${item.id}`,
+          title: item.name,
+        };
+      }),
+  ];
+
+  const videoStreams: Stream[] = folder.content
     .filter((item) => {
       return item.link || item.stream_link;
     })
@@ -102,16 +118,16 @@ streamRouter.get("/:type/:id", async (c) => {
     .filter((stream) => !!stream);
 
   // if no streams, output an error that will open the github
-  if (streams.length === 0) {
+  if (videoStreams.length === 0) {
     c.var.logger.info("No streamable files found");
     const error: Stream = {
-      name: "Premiumize Library",
+      name: `Premiumize Library ${serverEnv.isDevelopment ? "(dev)" : ""}`,
       title:
         "No streamable files found,\nif you think this is an error,\nplease open an issue\non GitHub by selecting this.",
       externalUrl: "https://github.com/megadrive/stremio-premiumize",
     };
-    return c.json({ streams: [error] });
+    videoStreams.push(error);
   }
 
-  return c.json({ streams });
+  return c.json({ streams: [...folderStreams, videoStreams] });
 });
