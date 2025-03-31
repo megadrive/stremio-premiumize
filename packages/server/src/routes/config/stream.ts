@@ -134,5 +134,5 @@ streamRouter.get("/:type/:id", async (c) => {
     videoStreams.push(error);
   }
 
-  return c.json({ streams: [...folderStreams, videoStreams] });
+  return c.json({ streams: [...folderStreams, ...videoStreams] });
 });
