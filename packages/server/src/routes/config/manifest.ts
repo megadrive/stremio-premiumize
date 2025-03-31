@@ -16,7 +16,10 @@ export const manifestRouter = createRouter();
  */
 manifestRouter.get("/", async (c) => {
   // just need to clone the object to avoid mutation, all config is in the `config` variable
-  const manifest = createManifest(addonManifest);
+  const manifest = createManifest({
+    ...addonManifest,
+    logo: `${c.var.config.baseUrl}/logo.png`,
+  });
 
   // long-lived header
   c.header("Cache-Control", `max-age: ${SIX_MONTHS}`);

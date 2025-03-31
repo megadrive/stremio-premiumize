@@ -1,12 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ConfigSchema, type Config, config } from "@stremio-addon/config";
+import {
+  ConfigFormInputSchema,
+  type ConfigFormInput,
+  config,
+} from "@stremio-addon/config";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
-async function generateInstallLinks(userConfig: Config): Promise<
+async function generateInstallLinks(userConfig: ConfigFormInput): Promise<
   | {
       /** encoded config */
       config: string;
@@ -58,8 +62,8 @@ export default function ConfigureForm() {
     handleSubmit,
     formState,
     formState: { errors },
-  } = useForm<Config>({
-    resolver: zodResolver(ConfigSchema),
+  } = useForm<ConfigFormInput>({
+    resolver: zodResolver(ConfigFormInputSchema),
     defaultValues: {
       premiumizeApiKey: "",
     },

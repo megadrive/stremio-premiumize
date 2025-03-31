@@ -20,6 +20,7 @@ export type Config = z.infer<typeof ConfigSchema>;
 export const ConfigFormInputSchema = ConfigSchema.omit({
   baseUrl: true,
 });
+export type ConfigFormInput = z.infer<typeof ConfigFormInputSchema>;
 
 type Result<T> = { success: true; data: T } | { success: false; error: string };
 
