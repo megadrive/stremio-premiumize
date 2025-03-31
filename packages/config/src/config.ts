@@ -9,11 +9,17 @@ import { z } from "zod";
  * @configuration
  */
 export const ConfigSchema = z.object({
+  /** Provide via the /configure form, used for absolute URLs. */
+  baseUrl: z.string(),
   premiumizeApiKey: z
     .string()
     .min(1, "You must provide an API key for the addon to work"),
 });
 export type Config = z.infer<typeof ConfigSchema>;
+
+export const ConfigFormInputSchema = ConfigSchema.omit({
+  baseUrl: true,
+});
 
 type Result<T> = { success: true; data: T } | { success: false; error: string };
 

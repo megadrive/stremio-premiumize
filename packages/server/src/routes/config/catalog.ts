@@ -57,7 +57,7 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
         id: `premiumize:${item.id}`,
         name,
         type: addonManifest.types[0],
-        poster: `http://localhost:4321/api/icon/${icon}`,
+        poster: `${c.var.config.baseUrl}/api/icon/${icon}`,
         behaviourHints: {
           defaultVideo:
             item.type === "file" ? `premiumize:${item.id}` : undefined,

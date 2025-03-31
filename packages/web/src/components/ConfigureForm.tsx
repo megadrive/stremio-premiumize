@@ -18,7 +18,10 @@ async function generateInstallLinks(userConfig: Config): Promise<
   | undefined
 > {
   try {
-    const encodedConfig = await config.encode(userConfig);
+    const encodedConfig = await config.encode({
+      ...userConfig,
+      baseUrl: window.location.origin,
+    });
     if (!encodedConfig.success) {
       throw new Error("Invalid config");
     }
