@@ -7,8 +7,15 @@ import {
 } from "@stremio-addon/config";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
 
 async function generateInstallLinks(userConfig: ConfigFormInput): Promise<
   | {
@@ -22,6 +29,7 @@ async function generateInstallLinks(userConfig: ConfigFormInput): Promise<
   | undefined
 > {
   try {
+    alert(JSON.stringify(userConfig));
     const encodedConfig = await config.encode({
       ...userConfig,
       baseUrl: window.location.origin,
@@ -57,15 +65,11 @@ async function generateInstallLinks(userConfig: ConfigFormInput): Promise<
 }
 
 export default function ConfigureForm() {
-  const {
-    register,
-    handleSubmit,
-    formState,
-    formState: { errors },
-  } = useForm<ConfigFormInput>({
+  const form = useForm<ConfigFormInput>({
     resolver: zodResolver(ConfigFormInputSchema),
     defaultValues: {
       premiumizeApiKey: "",
+      navigationViaStreamLinks: false,
     },
   });
 
@@ -73,67 +77,100 @@ export default function ConfigureForm() {
     useState<Awaited<ReturnType<typeof generateInstallLinks>>>();
 
   // handle form submission
-  const onSubmit = handleSubmit(async (data) => {
+  const onSubmit = form.handleSubmit(async (data) => {
     const generated = await generateInstallLinks(data);
     setConfigString(generated);
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <div className="flex flex-col gap-1">
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="premiumizeApiKey">Premiumize API Key</Label>
+    <Form {...form}>
+      <form onSubmit={onSubmit}>
+        <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
+            <FormField
+              control={form.control}
+              name="premiumizeApiKey"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <div className="flex flex-col gap-1">
+                    <FormLabel htmlFor="premiumizeApiKey">
+                      Premiumize API Key
+                    </FormLabel>
 
-            <Input
-              type="password"
-              {...register("premiumizeApiKey")}
-              className="border-2 border-gray-300 rounded-md p-2"
+                    <FormControl>
+                      <Input
+                        type="password"
+                        {...field}
+                        className="border-2 border-gray-300 rounded-md p-2"
+                      />
+                    </FormControl>
+                    <span className="text-red-500">
+                      {fieldState.error?.message}
+                    </span>
+                  </div>
+                </FormItem>
+              )}
             />
-            <span className="text-red-500">
-              {errors.premiumizeApiKey?.message}
-            </span>
+            <FormField
+              control={form.control}
+              name="navigationViaStreamLinks"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex flex-row gap-1">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="navigationViaStreamLinks">
+                      Enable navigation via streams. Only use with apps.
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="text-center">
+            <Button type="submit" className="w-full sm:w-1/3">
+              Submit
+            </Button>
           </div>
         </div>
-        <div className="text-center">
-          <Button type="submit" className="w-full sm:w-1/3">
-            Submit
+        <div
+          className={`${configString && !form.formState.isDirty ? "" : "hidden"} flex flex-row md:gap-6 gap-1 pt-1 justify-around`}
+        >
+          <Button
+            className="grow"
+            onClick={() =>
+              configString ? window.open(configString.url) : undefined
+            }
+          >
+            Install
+          </Button>
+          <Button
+            variant="secondary"
+            className="grow"
+            onClick={() =>
+              configString ? window.open(configString?.web) : undefined
+            }
+          >
+            Install (web)
+          </Button>
+          <Button
+            variant="outline"
+            className="grow"
+            onClick={(e) => {
+              e.preventDefault();
+              if (configString) {
+                navigator.clipboard.writeText(configString.url);
+              }
+            }}
+          >
+            Copy
           </Button>
         </div>
-      </div>
-      <div
-        className={`${configString && !formState.isDirty ? "" : "hidden"} flex flex-row md:gap-6 gap-1 pt-1 justify-around`}
-      >
-        <Button
-          className="grow"
-          onClick={() =>
-            configString ? window.open(configString.url) : undefined
-          }
-        >
-          Install
-        </Button>
-        <Button
-          variant="secondary"
-          className="grow"
-          onClick={() =>
-            configString ? window.open(configString?.web) : undefined
-          }
-        >
-          Install (web)
-        </Button>
-        <Button
-          variant="outline"
-          className="grow"
-          onClick={(e) => {
-            e.preventDefault();
-            if (configString) {
-              navigator.clipboard.writeText(configString.url);
-            }
-          }}
-        >
-          Copy
-        </Button>
-      </div>
-    </form>
+      </form>
+    </Form>
   );
 }

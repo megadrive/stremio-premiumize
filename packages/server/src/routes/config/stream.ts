@@ -46,6 +46,7 @@ streamRouter.get("/:type/:id", async (c) => {
   }
 
   let folderStreams: Stream[] = [];
+  c.var.logger.debug(c.var.config);
   if (c.var.config.navigationViaStreamLinks) {
     c.var.logger.info("Stream links for navigation ENABLED");
     folderStreams = [
