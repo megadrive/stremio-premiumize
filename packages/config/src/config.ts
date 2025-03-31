@@ -14,6 +14,7 @@ export const ConfigSchema = z.object({
   premiumizeApiKey: z
     .string()
     .min(1, "You must provide an API key for the addon to work"),
+  navigationViaStreamLinks: z.boolean().default(false),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 

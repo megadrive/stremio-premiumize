@@ -45,20 +45,24 @@ streamRouter.get("/:type/:id", async (c) => {
     return c.json({ meta: {}, error: "Failed to fetch folder" }, 500);
   }
 
-  const folderStreams: Stream[] = [
-    {
-      title: "^ Up a directory",
-      externalUrl: `stremio:///detail/series/premiumize:${folder.parent_id}`,
-    },
-    ...folder.content
-      .filter((item) => item.type === "folder")
-      .map((item) => {
-        return {
-          externalUrl: `stremio:///detail/series/premiumize:${item.id}`,
-          title: item.name,
-        };
-      }),
-  ];
+  let folderStreams: Stream[] = [];
+  if (c.var.config.navigationViaStreamLinks) {
+    c.var.logger.info("Stream links for navigation ENABLED");
+    folderStreams = [
+      {
+        title: "^ Up a directory",
+        externalUrl: `stremio:///detail/series/premiumize:${folder.parent_id}`,
+      },
+      ...folder.content
+        .filter((item) => item.type === "folder")
+        .map((item) => {
+          return {
+            externalUrl: `stremio:///detail/series/premiumize:${item.id}`,
+            title: item.name,
+          };
+        }),
+    ];
+  }
 
   const videoStreams: Stream[] = folder.content
     .filter((item) => {
