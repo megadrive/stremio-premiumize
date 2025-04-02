@@ -57,8 +57,6 @@ export const premiumizeApi = async <T>(
 
     const data = await res.json();
 
-    console.log(data);
-
     // verify it matches the provided schema
     const result = schema.safeParse(data);
     if (!result.success) {

@@ -109,15 +109,7 @@ metaRouter.get("/:type/:id", async (c) => {
             name: item.name,
             season,
             episode,
-            number: episode,
-            rating: "0",
             available: true,
-            firstAired: new Date(
-              item.created_at ?? Date.now() + idx
-            ).toISOString(),
-            released: new Date(
-              item.created_at ?? Date.now() + idx
-            ).toISOString(),
           };
           return meta;
         })
@@ -126,7 +118,7 @@ metaRouter.get("/:type/:id", async (c) => {
 
   const meta: MetaDetail = {
     id: `premiumize:${folder.folder_id}`,
-    name: folder.name ?? "Unknown",
+    name: folder.name?.replace(/#.+$/gi, "").trim() ?? "Unknown",
     description: `Path: ${folder.breadcrumbs?.map((crumb) => crumb.name).join(" > ")}`,
     releaseInfo: `${folder.content.length} item${folder.content.length !== 1 ? "s" : ""}`,
     links,

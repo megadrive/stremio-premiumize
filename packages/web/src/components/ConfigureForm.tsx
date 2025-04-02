@@ -111,25 +111,25 @@ export default function ConfigureForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="navigationViaStreamLinks"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex flex-row gap-1">
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormLabel htmlFor="navigationViaStreamLinks">
-                      Enable navigation via streams. Only use with apps.
-                    </FormLabel>
-                  </div>
-                </FormItem>
-              )}
-            />
+
+            <p>
+              You can get your Premiumize API key from{" "}
+              <a
+                href="https://www.premiumize.me/account"
+                target="_blank"
+                rel="noreferrer"
+                className="underline"
+              >
+                your account
+              </a>
+              .
+            </p>
+
+            <p>
+              You can treat a folder like a TV series by adding "#tv" to the end
+              of the folder name.
+            </p>
+
             <FormField
               control={form.control}
               name="hideFolderTags"
@@ -144,6 +144,26 @@ export default function ConfigureForm() {
                     </FormControl>
                     <FormLabel htmlFor="hideFolderTags">
                       Hide folder tags. ie: Get Smart #tv
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="navigationViaStreamLinks"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex flex-row gap-1">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="navigationViaStreamLinks">
+                      EXPERIMENTAL: Enable navigation via streams. Only use with
+                      apps.
                     </FormLabel>
                   </div>
                 </FormItem>
