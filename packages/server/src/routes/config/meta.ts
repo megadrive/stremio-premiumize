@@ -1,4 +1,4 @@
-import { fetchFolder } from "@/lib/premiumize.js";
+import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink, MetaVideo } from "stremio-addon-sdk";
@@ -26,6 +26,32 @@ metaRouter.get("/:type/:id", async (c) => {
 
   const folder = await fetchFolder(c.var.config.premiumizeApiKey, id);
   if (!folder) {
+    // it may be a file, so try to fetch it
+    const file = await itemDetails(c.var.config.premiumizeApiKey, id);
+    if (file) {
+      const meta: MetaDetail = {
+        id: `premiumize:${file.id}`,
+        name: file.name,
+        description: file.name,
+        releaseInfo: `Size: ${file.size}`,
+        // we know it's a single video file, but we need to treat it as a series
+        type: "series",
+        videos: [
+          {
+            id: `premiumize:${file.id}:video`,
+            // @ts-expect-error name is a new prop
+            name: file.name,
+            released: new Date(file.created_at ?? Date.now()).toISOString(),
+            available: true,
+            rating: "0",
+            season: 0,
+            episode: 1,
+          },
+        ],
+      };
+      return c.json({ meta });
+    }
+
     return c.json({ meta: {}, error: "Failed to fetch file info" }, 500);
   }
 

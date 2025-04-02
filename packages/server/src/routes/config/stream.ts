@@ -18,13 +18,29 @@ streamRouter.get("/:type/:id", async (c) => {
   }
 
   // removes premiumize: prefix
-  const [, id, isTvShow] = pid.split(":");
+  const [, id, special] = pid.split(":");
   if (!id) {
     return c.json({ error: "Invalid id" }, 500);
   }
 
   // handle #tv shows
-  if (isTvShow && isTvShow.toLowerCase() === "tv") {
+  if (special && special.toLowerCase() === "tv") {
+    // fetch the item directly
+    const item = await itemDetails(c.var.config.premiumizeApiKey, id);
+    if (!item) {
+      return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
+    }
+    const stream: Stream = {
+      title: `${item.stream_link ? "⚡ " : ""}${item.name}`,
+      url: item.stream_link ?? item.link,
+      behaviorHints: {
+        notWebReady: !testIsWebReady(item),
+      },
+    };
+    return c.json({ streams: [stream] });
+  }
+
+  if (special && special.toLowerCase() === "video") {
     // fetch the item directly
     const item = await itemDetails(c.var.config.premiumizeApiKey, id);
     if (!item) {
