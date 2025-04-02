@@ -1,7 +1,7 @@
 import { fetchFolder } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
-import type { MetaDetail, MetaLink } from "stremio-addon-sdk";
+import type { MetaDetail, MetaLink, MetaVideo } from "stremio-addon-sdk";
 
 function isVideoFile(name: string) {
   return /\.(mp4|mkv|avi|mov|wmv|flv|webm|mpg|mpeg)$/i.test(name);
@@ -55,23 +55,45 @@ metaRouter.get("/:type/:id", async (c) => {
     folder.name = "Premiumize Cloud";
   }
 
+  // TODO: Work out a better way to determine if this is a series
   const treatAsSeries = (folder.name ?? "").includes("#tv");
   c.var.logger.info(`Treating as series? ${treatAsSeries}`);
-  const videos: MetaDetail["videos"] = [];
+  let videos: MetaDetail["videos"] = [];
   if (treatAsSeries) {
-    videos.push(
-      // @ts-expect-error including "title" key breaks the whole thing.
+    videos = videos.concat(
       ...folder.content
         .filter((item) => item.type === "file" && isVideoFile(item.name))
         .map((item, idx) => {
-          return {
+          let season = 0; // special
+          let episode = idx + 1;
+
+          const matchSeason = item.name.match(/s(\d+)/i);
+          if (matchSeason) {
+            season = parseInt(matchSeason[1], 10);
+          }
+
+          const matchEpisode = item.name.match(/e(\d+)/i);
+          if (matchEpisode) {
+            episode = parseInt(matchEpisode[1], 10);
+          }
+
+          const meta: MetaVideo = {
             id: `premiumize:${item.id}:tv`,
-            // title: item.name,
+            // @ts-expect-error name is a new prop
             name: item.name,
-            season: 1,
-            episode: idx + 1,
-            released: new Date(item.created_at ?? Date.now()).toISOString(),
+            season,
+            episode,
+            number: episode,
+            rating: "0",
+            available: true,
+            firstAired: new Date(
+              item.created_at ?? Date.now() + idx
+            ).toISOString(),
+            released: new Date(
+              item.created_at ?? Date.now() + idx
+            ).toISOString(),
           };
+          return meta;
         })
     );
   }

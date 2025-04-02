@@ -29,7 +29,6 @@ async function generateInstallLinks(userConfig: ConfigFormInput): Promise<
   | undefined
 > {
   try {
-    alert(JSON.stringify(userConfig));
     const encodedConfig = await config.encode({
       ...userConfig,
       baseUrl: window.location.origin,
