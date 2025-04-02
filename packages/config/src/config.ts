@@ -15,6 +15,7 @@ export const ConfigSchema = z.object({
     .string()
     .min(1, "You must provide an API key for the addon to work"),
   navigationViaStreamLinks: z.boolean().default(false),
+  hideFolderTags: z.boolean().default(true),
 });
 export type Config = z.infer<typeof ConfigSchema>;
 

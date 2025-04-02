@@ -5,12 +5,19 @@ import { addonManifest } from "@/util/manifest.js";
 
 export const catalogRouter = createRouter();
 
-function prependIconToItemName(name: string, type: "file" | "folder") {
+function prependIconToItemName(
+  name: string,
+  type: "file" | "folder"
+): { name: string; icon: string } {
   const icon = type === "file" ? "📺" : "📂";
   return {
     name: `${icon} ${name}`,
     icon,
   };
+}
+
+function removeTags(name: string): string {
+  return name.replace(/#.+/g, "").trim();
 }
 
 // id = "premiumize:id"
@@ -27,7 +34,7 @@ catalogRouter.get("/:type/:id.json", async (c) => {
 
     return {
       id: `premiumize:${item.id}`,
-      name,
+      name: c.var.config.hideFolderTags ? removeTags(name) : name,
       type: addonManifest.types[0],
     };
   });
@@ -55,7 +62,7 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
 
       return {
         id: `premiumize:${item.id}`,
-        name,
+        name: c.var.config.hideFolderTags ? removeTags(name) : name,
         type: addonManifest.types[0],
         poster: `${c.var.config.baseUrl}/api/icon/${icon}`,
         behaviourHints: {

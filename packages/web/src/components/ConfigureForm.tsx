@@ -69,6 +69,7 @@ export default function ConfigureForm() {
     defaultValues: {
       premiumizeApiKey: "",
       navigationViaStreamLinks: false,
+      hideFolderTags: true,
     },
   });
 
@@ -124,6 +125,25 @@ export default function ConfigureForm() {
                     </FormControl>
                     <FormLabel htmlFor="navigationViaStreamLinks">
                       Enable navigation via streams. Only use with apps.
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="hideFolderTags"
+              render={({ field }) => (
+                <FormItem>
+                  <div className="flex flex-row gap-1">
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormLabel htmlFor="hideFolderTags">
+                      Hide folder tags. ie: Get Smart #tv
                     </FormLabel>
                   </div>
                 </FormItem>
