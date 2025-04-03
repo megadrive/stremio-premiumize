@@ -1,4 +1,5 @@
 import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
+import { fetchFolderSettings } from "@/lib/helpers.js";
 import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink, MetaVideo } from "stremio-addon-sdk";
@@ -81,11 +82,22 @@ metaRouter.get("/:type/:id", async (c) => {
     folder.name = "Premiumize Cloud";
   }
 
-  // TODO: Work out a better way to determine if this is a series
-  const treatAsSeries = (folder.name ?? "").includes("#tv");
+  // Get folder settings
+  const folderSettings = await fetchFolderSettings(
+    c.var.config.premiumizeApiKey,
+    id
+  );
+  const treatAsSeries = folderSettings.success && folderSettings.data.tv;
   c.var.logger.info(`Treating as series? ${treatAsSeries}`);
   let videos: MetaDetail["videos"] = [];
   if (treatAsSeries) {
+    /*
+      If the folder is a series, we need to treat it as such.
+      This means that we need to:
+      - Get all the video files in the folder
+      - Extract the season and episode number from the file name
+      - Create a MetaVideo object for each file
+     */
     videos = videos.concat(
       ...folder.content
         .filter((item) => item.type === "file" && isVideoFile(item.name))
@@ -116,11 +128,25 @@ metaRouter.get("/:type/:id", async (c) => {
     );
   }
 
+  const folderCount = folder.content.filter(
+    (item) => item.type === "folder"
+  ).length;
+  const fileCount = folder.content.filter(
+    (item) => item.type === "file"
+  ).length;
+  const pluralise = (word: string, count: number) => {
+    return `${word}${count === 1 ? "" : "s"}`;
+  };
+
+  const folderText = `${folderCount} ${pluralise("folder", folderCount)}`;
+
+  const fileText = `${folderCount} ${pluralise("file", fileCount)}`;
+
   const meta: MetaDetail = {
     id: `premiumize:${folder.folder_id}`,
     name: folder.name?.replace(/#.+$/gi, "").trim() ?? "Unknown",
     description: `Path: ${folder.breadcrumbs?.map((crumb) => crumb.name).join(" > ")}`,
-    releaseInfo: `${folder.content.length} item${folder.content.length !== 1 ? "s" : ""}`,
+    releaseInfo: `${[folderText, fileText].join(" | ")}`,
     links,
     type: addonManifest.types[0],
     videos,
