@@ -114,7 +114,7 @@ streamRouter.get("/:type/:id", async (c) => {
         subtitles.push({
           id: subtitle.id,
           url: subtitle.link,
-          lang: "en/us",
+          lang: "eng",
         });
       }
 
