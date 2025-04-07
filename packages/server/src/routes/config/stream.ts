@@ -1,3 +1,4 @@
+import { prefix } from "@/consts.js";
 import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import { serverEnv } from "@stremio-addon/env";
@@ -26,10 +27,11 @@ streamRouter.get("/:type/:id", async (c) => {
   // handle #tv shows
   if (special && special.toLowerCase() === "tv") {
     // fetch the item directly
-    const item = await itemDetails(c.var.config.premiumizeApiKey, id);
-    if (!item) {
+    const itemResult = await itemDetails(c.var.config.premiumizeApiKey, id);
+    if (!itemResult.success) {
       return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
     }
+    const item = itemResult.data;
     const stream: Stream = {
       title: `${item.stream_link ? "⚡ " : ""}${item.name}`,
       url: item.stream_link ?? item.link,
@@ -42,10 +44,11 @@ streamRouter.get("/:type/:id", async (c) => {
 
   if (special && special.toLowerCase() === "video") {
     // fetch the item directly
-    const item = await itemDetails(c.var.config.premiumizeApiKey, id);
-    if (!item) {
+    const itemResult = await itemDetails(c.var.config.premiumizeApiKey, id);
+    if (!itemResult.success) {
       return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
     }
+    const item = itemResult.data;
     const stream: Stream = {
       title: `${item.stream_link ? "⚡ " : ""}${item.name}`,
       url: item.stream_link ?? item.link,
@@ -56,10 +59,11 @@ streamRouter.get("/:type/:id", async (c) => {
     return c.json({ streams: [stream] });
   }
 
-  const folder = await fetchFolder(c.var.config.premiumizeApiKey, id);
-  if (!folder) {
+  const folderResult = await fetchFolder(c.var.config.premiumizeApiKey, id);
+  if (!folderResult?.success) {
     return c.json({ meta: {}, error: "Failed to fetch folder" }, 500);
   }
+  const folder = folderResult.data;
 
   let folderStreams: Stream[] = [];
   c.var.logger.debug(c.var.config);
@@ -68,13 +72,13 @@ streamRouter.get("/:type/:id", async (c) => {
     folderStreams = [
       {
         title: "^ Up a directory",
-        externalUrl: `stremio:///detail/series/premiumize:${folder.parent_id}`,
+        externalUrl: `stremio:///detail/series/${prefix}:${folder.parent_id}`,
       },
       ...folder.content
         .filter((item) => item.type === "folder")
         .map((item) => {
           return {
-            externalUrl: `stremio:///detail/series/premiumize:${item.id}`,
+            externalUrl: `stremio:///detail/series/${prefix}:${item.id}`,
             title: item.name,
           };
         }),
@@ -126,7 +130,7 @@ streamRouter.get("/:type/:id", async (c) => {
       const isWebReady = testIsWebReady(item);
 
       return {
-        id: `premiumize:${item.id}`,
+        id: `${prefix}:${item.id}`,
         title: item.name,
         type: item.type === "folder" ? "series" : "movie",
         url: item.stream_link ?? item.link,

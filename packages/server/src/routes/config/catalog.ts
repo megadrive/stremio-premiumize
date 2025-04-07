@@ -2,6 +2,7 @@ import { createRouter } from "@/util/createHono.js";
 import type { MetaDetail } from "stremio-addon-sdk";
 import { fetchFolder, search as searchRemote } from "@/lib/premiumize.js";
 import { addonManifest } from "@/util/manifest.js";
+import { prefix } from "@/consts.js";
 
 export const catalogRouter = createRouter();
 
@@ -23,17 +24,19 @@ function removeTags(name: string): string {
 // id = "premiumize:id"
 catalogRouter.get("/:type/:id.json", async (c) => {
   // fetch the folder contents
-  const folder = await fetchFolder(c.var.config.premiumizeApiKey);
+  const folderResult = await fetchFolder(c.var.config.premiumizeApiKey);
 
-  if (!folder) {
+  if (!folderResult?.success) {
     return c.json({ error: "Failed to fetch folder" });
   }
+
+  const folder = folderResult.data;
 
   const metas: MetaDetail[] = folder.content.map((item) => {
     const { name } = prependIconToItemName(item.name, item.type);
 
     return {
-      id: `premiumize:${item.id}`,
+      id: `${prefix}:${item.id}`,
       name: c.var.config.hideFolderTags ? removeTags(name) : name,
       type: addonManifest.types[0],
     };
@@ -52,22 +55,27 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
   const [, q] = search.replace(`.json$`, "").split("=");
 
   try {
-    const results = await searchRemote(c.var.config.premiumizeApiKey, q);
-    if (!results) {
+    const searchResultResult = await searchRemote(
+      c.var.config.premiumizeApiKey,
+      q
+    );
+    if (!searchResultResult?.success) {
       throw new Error("Failed to search");
     }
 
-    const metas: MetaDetail[] = results.content.map((item) => {
+    const searchResult = searchResultResult.data;
+
+    const metas: MetaDetail[] = searchResult.content.map((item) => {
       const { name, icon } = prependIconToItemName(item.name, item.type);
 
       return {
-        id: `premiumize:${item.id}`,
+        id: `${prefix}:${item.id}`,
         name: c.var.config.hideFolderTags ? removeTags(name) : name,
         type: addonManifest.types[0],
         poster: `${c.var.config.baseUrl}/api/icon/${icon}`,
         behaviourHints: {
           defaultVideo:
-            item.type === "file" ? `premiumize:${item.id}` : undefined,
+            item.type === "file" ? `${prefix}:${item.id}` : undefined,
         },
       };
     });

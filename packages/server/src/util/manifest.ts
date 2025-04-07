@@ -1,3 +1,4 @@
+import { prefix } from "@/consts.js";
 import { serverEnv } from "@stremio-addon/env";
 import type { Manifest } from "stremio-addon-sdk";
 
@@ -57,5 +58,5 @@ export const addonManifest = createManifest({
       ],
     },
   ],
-  idPrefixes: ["premiumize:"],
+  idPrefixes: [`${prefix}:`],
 });

@@ -1,3 +1,4 @@
+import { prefix } from "@/consts.js";
 import { createRouter } from "@/util/createHono.js";
 import { addonManifest, createManifest } from "@/util/manifest.js";
 
@@ -18,6 +19,7 @@ manifestRouter.get("/", async (c) => {
   // just need to clone the object to avoid mutation, all config is in the `config` variable
   const manifest = createManifest({
     ...addonManifest,
+    idPrefixes: [`${prefix}:`],
     logo: `${c.var.config.baseUrl}/logo.png`,
   });
 

@@ -46,6 +46,7 @@ export const PremiumizeFolderResponseSchema = z.object({
   parent_id: z.string().optional(),
   folder_id: z.string().optional(),
 });
+type PremiumizeFolderResponse = z.infer<typeof PremiumizeFolderResponseSchema>;
 
 const API_BASE = "https://www.premiumize.me/api";
 export const premiumizeApi = async <T>(
@@ -79,30 +80,50 @@ export const premiumizeApi = async <T>(
     if (error instanceof PremiumizeError) {
       return {
         success: false,
-        error: `[${error.name}] Failed to fetch data ${error.message}`,
+        message: `[${error.name}] Failed to fetch data ${error.message}`,
       };
     }
 
-    return { success: false, error: `Failed to fetch data: unknown reason` };
+    return { success: false, message: `Failed to fetch data: unknown reason` };
   }
 };
 
-export const fetchFolder = async (apikey: string, id?: string) => {
+/**
+ * Fetch a folder.
+ * @param apikey Premiumize API key
+ * @param id ID of the folder to fetch. If not provided, the root folder will be fetched.
+ * @returns The folder contents, or undefined if an error occurred.
+ */
+export const fetchFolder = async (
+  apikey: string,
+  id?: string
+): Promise<Result<PremiumizeFolderResponse>> => {
   try {
-    const res = await premiumizeApi<
-      z.infer<typeof PremiumizeFolderResponseSchema>
-    >(
+    const res = await premiumizeApi<PremiumizeFolderResponse>(
       `/folder/list?${id ? `id=${id}&` : ""}includebreadcrumbs=true`,
       apikey,
       PremiumizeFolderResponseSchema
     );
 
-    return res;
+    if (!res.success) {
+      return {
+        success: false,
+        message: res.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: res.data,
+    };
   } catch (error) {
     console.error(error);
-  }
 
-  return undefined;
+    return {
+      success: false,
+      message: `Failed to fetch folder: ${error}`,
+    };
+  }
 };
 
 const ItemDetailSchema = z.object({
@@ -137,21 +158,38 @@ const ItemDetailSchema = z.object({
   audio_track_names: z.array(z.string()),
   bitrate: z.number().optional(),
 });
+type ItemDetails = z.infer<typeof ItemDetailSchema>;
 
-export const itemDetails = async (apikey: string, id: string) => {
+export const itemDetails = async (
+  apikey: string,
+  id: string
+): Promise<Result<ItemDetails>> => {
   try {
-    const res = await premiumizeApi<z.infer<typeof ItemDetailSchema>>(
+    const res = await premiumizeApi<ItemDetails>(
       `/item/details?id=${id}`,
       apikey,
       ItemDetailSchema
     );
 
-    return res;
+    if (!res.success) {
+      return {
+        success: false,
+        message: res.message,
+      };
+    }
+
+    return {
+      success: true,
+      data: res.data,
+    };
   } catch (error) {
     console.error(error);
   }
 
-  return undefined;
+  return {
+    success: false,
+    message: "Failed to fetch item details",
+  };
 };
 
 const SearchItemSchema = z.object({
@@ -190,3 +228,22 @@ export const search = async (apikey: string, query: string) => {
 
   return undefined;
 };
+
+export function filterByRegexString<T = { name: string }>(
+  regexString: string,
+  items: T[],
+  type: "whitelist" | "blacklist" = "whitelist"
+) {
+  const regex = new RegExp(regexString, "i");
+  switch (type) {
+    case "blacklist":
+      return items.filter((item) => {
+        return !regex.test(item.name);
+      });
+    case "whitelist":
+    default:
+      return items.filter((item) => {
+        return regex.test(item.name);
+      });
+  }
+}

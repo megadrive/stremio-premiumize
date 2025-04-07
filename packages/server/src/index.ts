@@ -30,6 +30,10 @@ app.get("/manifest.json", (c) => {
   return c.json(manifest);
 });
 
+const apiRouter = createAPIRouter();
+apiRouter.route("/icon", iconAPIRouter);
+app.route("/api", apiRouter);
+
 const configRouter = createRouter();
 configRouter.route("/manifest.json", manifestRouter);
 configRouter.route("/catalog", catalogRouter);
@@ -38,10 +42,6 @@ configRouter.route("/stream", streamRouter);
 configRouter.route("/subtitle", subtitleRouter);
 
 app.route("/:config", configRouter);
-
-const apiRouter = createAPIRouter();
-apiRouter.route("/icon", iconAPIRouter);
-app.route("/api", apiRouter);
 
 serve(
   {

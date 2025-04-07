@@ -36,7 +36,7 @@ const parseTags = (name: string): Result<FolderSettings> => {
   if (!changed) {
     return {
       success: false,
-      error: "No settings found",
+      message: "No settings found",
     };
   }
 
@@ -163,7 +163,7 @@ export const fetchFolderSettings = async (
       console.error(error.message, error);
       return {
         success: false,
-        error: "Failed to fetch folder settings: " + error.message,
+        message: "Failed to fetch folder settings: " + error.message,
       };
     }
 
@@ -172,7 +172,7 @@ export const fetchFolderSettings = async (
 
   return {
     success: false,
-    error: "Failed to fetch folder settings",
+    message: "Failed to fetch folder settings",
   };
 };
 
