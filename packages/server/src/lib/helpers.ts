@@ -54,11 +54,13 @@ export const fetchFolderSettings = async (
   folderId?: string
 ): Promise<Result<FolderSettings>> => {
   try {
-    const folder = await fetchFolder(apikey, folderId);
+    const folderResult = await fetchFolder(apikey, folderId);
 
-    if (!folder) {
+    if (!folderResult?.success) {
       throw new FolderSettingsError("Failed to fetch folder");
     }
+
+    const { data: folder } = folderResult;
 
     // Prefer hashtags over .settings folder for now. Blockscope it for fun
     {
@@ -97,12 +99,14 @@ export const fetchFolderSettings = async (
 
       // could be above the current folder, go look through the breadcrumbs
       for (const breadcrumb of folder.breadcrumbs) {
-        const breadcrumbFolder = await fetchFolder(apikey, breadcrumb.id);
+        const breadcrumbFolderResult = await fetchFolder(apikey, breadcrumb.id);
 
-        if (!breadcrumbFolder) {
+        if (!breadcrumbFolderResult?.success) {
           console.error("Failed to fetch breadcrumb folder");
           continue;
         }
+
+        const breadcrumbFolder = breadcrumbFolderResult.data;
 
         const settingsFolder = breadcrumbFolder.content.find(
           (item) => item.name === SETTINGS_FOLDER_NAME && item.type === "folder"
@@ -126,11 +130,16 @@ export const fetchFolderSettings = async (
       }
     }
 
-    const settingsFolderContent = await fetchFolder(apikey, settingsFolderId);
+    const settingsFolderContentResult = await fetchFolder(
+      apikey,
+      settingsFolderId
+    );
 
-    if (!settingsFolderContent) {
+    if (!settingsFolderContentResult?.success) {
       throw new FolderSettingsError("Failed to fetch settings folder");
     }
+
+    const settingsFolderContent = settingsFolderContentResult.data;
 
     // get the actual settings
     const hide = settingsFolderContent.content.find(
@@ -151,11 +160,14 @@ export const fetchFolderSettings = async (
     };
   } catch (error) {
     if (error instanceof FolderSettingsError) {
+      console.error(error.message, error);
       return {
         success: false,
         error: "Failed to fetch folder settings: " + error.message,
       };
     }
+
+    console.error("Unknown error getting folder settings", error);
   }
 
   return {

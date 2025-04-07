@@ -15,7 +15,7 @@ const app = createApp();
 app.use(
   "*",
   serveStatic({
-    root: "../web/dist/client",
+    root: "../frontend/dist/client",
   })
 );
 

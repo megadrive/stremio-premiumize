@@ -1,4 +1,12 @@
 import { z } from "zod";
+import type { Result } from "./result.type.js";
+
+class PremiumizeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PremiumizeError";
+  }
+}
 
 const ItemSchema = z.object({
   id: z.string(),
@@ -44,7 +52,7 @@ export const premiumizeApi = async <T>(
   path: string,
   apiKey: string,
   schema: z.ZodType<T>
-) => {
+): Promise<Result<T>> => {
   try {
     const appendApiKey = (path.includes("?") ? "&" : "?") + `apikey=${apiKey}`;
     const url = `${API_BASE}${path}${appendApiKey}`;
@@ -60,15 +68,23 @@ export const premiumizeApi = async <T>(
     // verify it matches the provided schema
     const result = schema.safeParse(data);
     if (!result.success) {
-      throw new Error(`Failed to parse ${path}: ${result.error}`);
+      throw new PremiumizeError(`Failed to parse ${path}: ${result.error}`);
     }
 
-    return result.data;
+    return {
+      success: true,
+      data: result.data,
+    };
   } catch (error) {
-    console.error(error);
-  }
+    if (error instanceof PremiumizeError) {
+      return {
+        success: false,
+        error: `[${error.name}] Failed to fetch data ${error.message}`,
+      };
+    }
 
-  return undefined;
+    return { success: false, error: `Failed to fetch data: unknown reason` };
+  }
 };
 
 export const fetchFolder = async (apikey: string, id?: string) => {
