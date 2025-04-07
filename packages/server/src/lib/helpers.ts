@@ -175,11 +175,3 @@ export const fetchFolderSettings = async (
     message: "Failed to fetch folder settings",
   };
 };
-
-fetchFolderSettings("bpestfy8pszn6zwj", "TLv5Gkv66U7CFyasWEXn6g")
-  .then((result) => {
-    console.log(result);
-  })
-  .catch((error) => {
-    console.error(error);
-  });

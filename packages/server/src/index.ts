@@ -39,7 +39,7 @@ configRouter.route("/manifest.json", manifestRouter);
 configRouter.route("/catalog", catalogRouter);
 configRouter.route("/meta", metaRouter);
 configRouter.route("/stream", streamRouter);
-configRouter.route("/subtitle", subtitleRouter);
+configRouter.route("/subtitles", subtitleRouter);
 
 app.route("/:config", configRouter);
 

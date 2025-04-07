@@ -42,8 +42,7 @@ export const addonManifest = createManifest({
   version: `1.0.0${serverEnv.isDevelopment ? "-dev" : ""}`,
   description: "Access your Premiumize cloud library",
   types: ["series"],
-  logo: "https://premiumize-library.almosteffective.com/logo.png",
-  resources: ["meta", "catalog", "stream"],
+  resources: ["meta", "catalog", "stream", "subtitles"],
   catalogs: [
     {
       id: "library",
