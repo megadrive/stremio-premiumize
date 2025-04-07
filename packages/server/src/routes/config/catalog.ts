@@ -3,6 +3,7 @@ import type { MetaDetail } from "stremio-addon-sdk";
 import { fetchFolder, search as searchRemote } from "@/lib/premiumize.js";
 import { addonManifest } from "@/util/manifest.js";
 import { prefix } from "@/consts.js";
+import isVideoFile from "@/util/isVideoFile.js";
 
 export const catalogRouter = createRouter();
 
@@ -32,15 +33,17 @@ catalogRouter.get("/:type/:id.json", async (c) => {
 
   const folder = folderResult.data;
 
-  const metas: MetaDetail[] = folder.content.map((item) => {
-    const { name } = prependIconToItemName(item.name, item.type);
+  const metas: MetaDetail[] = folder.content
+    .filter((item) => isVideoFile(item.name))
+    .map((item) => {
+      const { name } = prependIconToItemName(item.name, item.type);
 
-    return {
-      id: `${prefix}:${item.id}`,
-      name: c.var.config.hideFolderTags ? removeTags(name) : name,
-      type: addonManifest.types[0],
-    };
-  });
+      return {
+        id: `${prefix}:${item.id}`,
+        name: c.var.config.hideFolderTags ? removeTags(name) : name,
+        type: addonManifest.types[0],
+      };
+    });
 
   return c.json({ metas });
 });
@@ -65,20 +68,22 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
 
     const searchResult = searchResultResult.data;
 
-    const metas: MetaDetail[] = searchResult.content.map((item) => {
-      const { name, icon } = prependIconToItemName(item.name, item.type);
+    const metas: MetaDetail[] = searchResult.content
+      .filter((item) => item.type === "folder" || isVideoFile(item.name))
+      .map((item) => {
+        const { name, icon } = prependIconToItemName(item.name, item.type);
 
-      return {
-        id: `${prefix}:${item.id}`,
-        name: c.var.config.hideFolderTags ? removeTags(name) : name,
-        type: addonManifest.types[0],
-        poster: `${c.var.config.baseUrl}/api/icon/${icon}`,
-        behaviourHints: {
-          defaultVideo:
-            item.type === "file" ? `${prefix}:${item.id}` : undefined,
-        },
-      };
-    });
+        return {
+          id: `${prefix}:toParent:${item.id}`,
+          name: c.var.config.hideFolderTags ? removeTags(name) : name,
+          type: addonManifest.types[0],
+          poster: `${c.var.config.baseUrl}/api/icon/${icon}/poster`,
+          behaviourHints: {
+            defaultVideo:
+              item.type === "file" ? `${prefix}:${item.id}` : undefined,
+          },
+        };
+      });
 
     return c.json({ metas });
   } catch (error) {

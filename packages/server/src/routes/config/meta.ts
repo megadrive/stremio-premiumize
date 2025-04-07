@@ -4,10 +4,7 @@ import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink, MetaVideo } from "stremio-addon-sdk";
 import { prefix } from "@/consts.js";
-
-function isVideoFile(name: string) {
-  return /\.(mp4|mkv|avi|mov|wmv|flv|webm|mpg|mpeg)$/i.test(name);
-}
+import isVideoFile from "@/util/isVideoFile.js";
 
 // should match: /:config/meta/:type/:id/:extras?.json
 // ex: /configexample/meta/movie/123456.json
