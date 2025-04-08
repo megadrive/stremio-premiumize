@@ -34,7 +34,7 @@ catalogRouter.get("/:type/:id.json", async (c) => {
   const folder = folderResult.data;
 
   const metas: MetaDetail[] = folder.content
-    .filter((item) => isVideoFile(item.name))
+    .filter((item) => item.type === "folder" || isVideoFile(item.name))
     .map((item) => {
       const { name } = prependIconToItemName(item.name, item.type);
 
