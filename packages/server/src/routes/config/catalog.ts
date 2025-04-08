@@ -36,12 +36,13 @@ catalogRouter.get("/:type/:id.json", async (c) => {
   const metas: MetaDetail[] = folder.content
     .filter((item) => item.type === "folder" || isVideoFile(item.name))
     .map((item) => {
-      const { name } = prependIconToItemName(item.name, item.type);
+      const { name, icon } = prependIconToItemName(item.name, item.type);
 
       return {
         id: `${prefix}:${item.id}`,
         name: c.var.config.hideFolderTags ? removeTags(name) : name,
         type: addonManifest.types[0],
+        poster: `${c.var.config.baseUrl}/api/icon/${icon}/poster`,
       };
     });
 
@@ -74,7 +75,7 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
         const { name, icon } = prependIconToItemName(item.name, item.type);
 
         return {
-          id: `${prefix}:toParent:${item.id}`,
+          id: `${prefix}:${item.id}`,
           name: c.var.config.hideFolderTags ? removeTags(name) : name,
           type: addonManifest.types[0],
           poster: `${c.var.config.baseUrl}/api/icon/${icon}/poster`,
