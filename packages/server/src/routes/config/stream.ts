@@ -1,13 +1,67 @@
 import { prefix } from "@/consts.js";
-import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
+import { fetchFolder, itemDetails, search } from "@/lib/premiumize.js";
+import type { Result } from "@/lib/result.type.js";
 import { createRouter } from "@/util/createHono.js";
 import { serverEnv } from "@stremio-addon/env";
 import type { Stream, Subtitle } from "stremio-addon-sdk";
+import { z } from "zod";
 
 export const streamRouter = createRouter();
 
 function testIsWebReady(item: { stream_link?: string | null }) {
   return item.stream_link && item.stream_link.endsWith(".mp4");
+}
+
+async function getIMDbInfo(
+  imdbId: string,
+  type: string
+): Promise<Result<{ name: string; season?: string; episode?: string }>> {
+  const [id, season, episode] =
+    type === "series" ? imdbId.split(":") : [imdbId];
+
+  try {
+    console.debug(
+      `Fetching IMDb info for ${type} with ID ${id} (season: ${season}, episode: ${episode})`
+    );
+    const cinemetaResponse = await fetch(
+      `https://v3-cinemeta.strem.io/meta/${type}/${id}.json`
+    );
+
+    if (!cinemetaResponse.ok) {
+      throw new Error("Bad response from Cinemeta", {
+        cause: "getIMDbInfo:fetch",
+      });
+    }
+
+    const json = await cinemetaResponse.json();
+
+    const cinemeta = z
+      .object({
+        meta: z.object({
+          imdb_id: z.string(),
+          name: z.string(),
+        }),
+      })
+      .safeParse(json);
+
+    if (!cinemeta.success) {
+      throw new Error("Invalid response from Cinemeta", {
+        cause: "getIMDbInfo:parseResponse",
+      });
+    }
+
+    return {
+      success: true,
+      data: {
+        name: cinemeta.data.meta.name,
+        season,
+        episode,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching Cinemeta data:", error);
+    return { success: false, message: "Failed to fetch Cinemeta data" };
+  }
 }
 
 streamRouter.get("/:type/:id", async (c) => {
@@ -16,6 +70,67 @@ streamRouter.get("/:type/:id", async (c) => {
 
   if (!pid) {
     return c.json({ meta: {}, error: "Missing id" }, 500);
+  }
+
+  if (pid.startsWith("tt")) {
+    const imdbInfo = await getIMDbInfo(pid, c.req.param("type"));
+    if (!imdbInfo.success) {
+      return c.json({ meta: {}, error: "Failed to fetch IMDb info" }, 500);
+    }
+    const { name, season, episode } = imdbInfo.data;
+
+    // do a search in premiumize
+    // pad with a 0 if less than 10
+    const paddedSeason = season ? `S${season.padStart(2, "0")}` : undefined;
+    const paddedEpisode = episode ? `E${episode.padStart(2, "0")}` : undefined;
+    const searchResults = await search(
+      c.var.config.premiumizeApiKey,
+      `${name} ${paddedSeason ?? ""} ${paddedEpisode ?? ""}`.trim()
+    );
+
+    if (!searchResults?.success) {
+      return c.json({ meta: {}, error: "Failed to fetch search results" }, 500);
+    }
+    const searchResult = searchResults.data;
+    if (searchResult.content.length === 0) {
+      return c.json({ meta: {}, error: "No results found" }, 500);
+    }
+
+    const streams: Stream[] = [];
+    const detailPromises = await Promise.allSettled(
+      searchResult.content.map(async (item) => {
+        const itemResult = await itemDetails(
+          c.var.config.premiumizeApiKey,
+          item.id
+        );
+
+        if (!itemResult.success) {
+          return undefined;
+        }
+
+        const details = itemResult.data;
+        if (details.type !== "file") {
+          return undefined;
+        }
+
+        const stream: Stream = {
+          title: `${details.stream_link ? "⚡ " : ""}${details.name}`,
+          url: details.stream_link ?? details.link,
+          behaviorHints: {
+            notWebReady: !testIsWebReady(details),
+          },
+        };
+        return stream;
+      })
+    );
+
+    detailPromises.forEach((result) => {
+      if (result.status === "fulfilled" && result.value) {
+        streams.push(result.value);
+      }
+    });
+
+    return c.json({ streams });
   }
 
   // removes premiumize: prefix

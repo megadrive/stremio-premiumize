@@ -42,12 +42,21 @@ export const addonManifest = createManifest({
   version: `1.0.0${serverEnv.isDevelopment ? "-dev" : ""}`,
   description: "Access your Premiumize cloud library",
   types: ["series"],
-  resources: ["meta", "catalog", "stream", "subtitles"],
+  resources: [
+    "meta",
+    "catalog",
+    {
+      name: "stream",
+      types: ["movie", "series"],
+      idPrefixes: ["tt"],
+    },
+    "subtitles",
+  ],
   catalogs: [
     {
       id: "library",
       // @ts-expect-error custom type
-      type: "premiumize",
+      type: `premiumize${serverEnv.isDevelopment ? "-dev" : ""}`,
       name: "Premiumize Library",
       extra: [
         {
