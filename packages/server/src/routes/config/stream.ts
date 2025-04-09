@@ -1,4 +1,4 @@
-import { prefix } from "@/consts.js";
+import { prefix, subtitleExtensions } from "@/consts.js";
 import { fetchFolder, itemDetails, search } from "@/lib/premiumize.js";
 import type { Result } from "@/lib/result.type.js";
 import { createRouter } from "@/util/createHono.js";
@@ -113,9 +113,50 @@ streamRouter.get("/:type/:id", async (c) => {
           return undefined;
         }
 
+        // get the parent folder
+        const parent = await fetchFolder(
+          c.var.config.premiumizeApiKey,
+          details.folder_id
+        );
+
+        let subtitles: Subtitle[] = [];
+        if (parent.success) {
+          c.var.logger.debug(`Parent folder found: ${parent.data.name}`);
+          // find subtitles for the file
+          subtitles = parent.data.content
+            .filter((file) => {
+              const ext = file.name.split(".").pop();
+              return (
+                file.type === "file" &&
+                ext &&
+                subtitleExtensions.includes(ext) &&
+                file.link
+              );
+            })
+            .map(function toSubtitle(file) {
+              const match = file.name.match(/^.*\.(\w{3})\.(srt|vtt)$/i);
+              if (!match) {
+                c.var.logger.warn(
+                  `Subtitle file ${file.name} does not match a language code, using default (eng)`
+                );
+                return {
+                  id: `${prefix}:${file.id}:subtitle`,
+                  url: file.link ?? "",
+                  lang: "eng",
+                };
+              }
+              return {
+                id: `${prefix}:${file.id}:subtitle`,
+                url: file.link ?? "",
+                lang: match[1],
+              };
+            });
+        }
+
         const stream: Stream = {
           title: `${details.stream_link ? "⚡ " : ""}${details.name}`,
           url: details.stream_link ?? details.link,
+          subtitles,
           behaviorHints: {
             notWebReady: !testIsWebReady(details),
           },

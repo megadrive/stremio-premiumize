@@ -3,6 +3,7 @@ import { fetchFolder } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import type { Subtitle } from "stremio-addon-sdk";
 import { iso6392 } from "iso-639-2";
+import { z } from "zod";
 
 export const subtitleRouter = createRouter();
 
@@ -72,3 +73,28 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
 
   return c.json({ subtitles });
 });
+
+export const utils = {
+  /** Filters an array and returns items with an approved subtitle. */
+  filterSubtitleItems: (items: unknown[]) => {
+    const _items = z
+      .array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          type: z.string(),
+        })
+      )
+      .parse(items);
+
+    const supportedExtensions = ["srt", "vtt"];
+    return _items.filter((item) => {
+      if (typeof item !== "object" || !item) {
+        return false;
+      }
+      const fileName = item.name as string;
+      const ext = fileName.split(".").pop();
+      return typeof ext === "string" && supportedExtensions.includes(ext);
+    });
+  },
+};
