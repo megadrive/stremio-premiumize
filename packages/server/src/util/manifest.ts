@@ -48,7 +48,8 @@ export const addonManifest = createManifest({
     {
       name: "stream",
       types: ["movie", "series"],
-      idPrefixes: ["tt"],
+      // override to grab on every ID, not just "premiumize:" links
+      idPrefixes: [""],
     },
     "subtitles",
   ],
