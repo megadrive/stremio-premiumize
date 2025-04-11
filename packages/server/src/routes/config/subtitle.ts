@@ -15,6 +15,10 @@ const re_lang = new RegExp(
   "i"
 );
 
+const stripNonAlphaNumeric = (str: string) => {
+  return str.replace(/[^a-zA-Z0-9-_ ]/g, "_");
+};
+
 subtitleRouter.get("/:type/:id.json", async (c) => {
   const config = c.var.config;
 
@@ -49,8 +53,10 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
     })
     .filter(function matchWithFileBestGuess(file) {
       // check if the file name contains the video file name
-      const videoFileName = itemDeets.data.name;
-      const fileName = file.name.split(".").slice(0, -1).join(".");
+      const videoFileName = stripNonAlphaNumeric(itemDeets.data.name);
+      const fileName = stripNonAlphaNumeric(
+        file.name.split(".").slice(0, -1).join(".")
+      );
       const regex = new RegExp(fileName, "i");
       return regex.test(videoFileName);
     })
