@@ -1,5 +1,5 @@
 import { prefix } from "@/consts.js";
-import { fetchFolder } from "@/lib/premiumize.js";
+import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { createRouter } from "@/util/createHono.js";
 import type { Subtitle } from "stremio-addon-sdk";
 import { iso6392 } from "iso-639-2";
@@ -19,17 +19,23 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
   const config = c.var.config;
 
   const id = c.req.param("id.json");
-  const folderId = id.split(":")[1]?.replace(/\.json$/, "");
+  const fileId = id.split(":")[1]?.replace(/\.json$/, "");
 
-  if (!folderId) {
+  if (!fileId) {
     return c.json({ error: "Invalid file ID" }, 400);
   }
+
+  const itemDeets = await itemDetails(config.premiumizeApiKey, fileId);
+  if (!itemDeets.success) {
+    return c.json({ error: `Item not found: ${fileId}` }, 404);
+  }
+  const folderId = itemDeets.data.folder_id;
 
   // grab the item to get its parent folder, then get all subtitle files based on the filename of the video item
   // fetch the folder contents
   const folderResult = await fetchFolder(config.premiumizeApiKey, folderId);
   if (!folderResult.success) {
-    return c.json({ error: `Folder not found: ${folderId}` }, 404);
+    return c.json({ error: `Folder not found: ${fileId}` }, 404);
   }
   const folder = folderResult.data;
 
@@ -37,9 +43,16 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
   const exts = ["srt", "vtt"];
   const subtitles: Subtitle[] = folder.content
     .filter((file) => file.type === "file")
-    .filter((file) => {
+    .filter(function filterSubtitleExtensions(file) {
       const ext = file.name.split(".").pop();
       return ext && exts.includes(ext);
+    })
+    .filter(function matchWithFileBestGuess(file) {
+      // check if the file name contains the video file name
+      const videoFileName = itemDeets.data.name;
+      const fileName = file.name.split(".").slice(0, -1).join(".");
+      const regex = new RegExp(fileName, "i");
+      return regex.test(videoFileName);
     })
     .map((file) => {
       // ensure it matches a language, then provide that language in the response
@@ -64,7 +77,7 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
       }
 
       return {
-        id: `${prefix}:${folderId}:subtitle`,
+        id: `${prefix}:${fileId}:subtitle`,
         lang: file.langCode,
         url: file.link,
       };
