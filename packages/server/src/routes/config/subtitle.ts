@@ -4,6 +4,7 @@ import { createRouter } from "@/util/createHono.js";
 import type { Subtitle } from "stremio-addon-sdk";
 import { iso6392 } from "iso-639-2";
 import { z } from "zod";
+import { fuzzy } from "fast-fuzzy";
 
 export const subtitleRouter = createRouter();
 
@@ -15,8 +16,42 @@ const re_lang = new RegExp(
   "i"
 );
 
+const stripExtension = (filename: string) => {
+  return filename.split(".").slice(0, -1).join(".");
+};
+
 const stripNonAlphaNumeric = (str: string) => {
-  return str.replace(/[^a-zA-Z0-9-_ ]/g, "_");
+  return str.replace(/[^a-zA-Z0-9]/g, "");
+};
+
+const normaliseSeasonEpisodeNumbers = (str: string) => {
+  const regex = /[SE](\d+)/i;
+  const match = str.match(regex);
+  if (match) {
+    const prefix = match[0][0];
+    const number = match[1].padStart(2, "0");
+    return str.replace(regex, `${prefix}${number}`);
+  }
+  return str;
+};
+
+const removeShowTitleFromStart = (str: string, showTitle: string) => {
+  const regex = new RegExp(`^${stripNonAlphaNumeric(showTitle)}`, "i");
+  return str.replace(regex, "");
+};
+
+const normalise = (filename: string) => {
+  // remove the extension
+  const name = stripExtension(filename);
+  // remove non-alphanumeric characters
+  const stripped = stripNonAlphaNumeric(name);
+  // remove the show title from the start
+  const noShowTitle = removeShowTitleFromStart(stripped, "Blue Heelers");
+  // normalise season/episode numbers
+  const seasonEpisodeNumbers = normaliseSeasonEpisodeNumbers(noShowTitle);
+
+  const normalised = seasonEpisodeNumbers;
+  return normalised;
 };
 
 subtitleRouter.get("/:type/:id.json", async (c) => {
@@ -52,41 +87,29 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
       return ext && exts.includes(ext);
     })
     .filter(function matchWithFileBestGuess(file) {
-      // check if the file name contains the video file name
-      const videoFileName = stripNonAlphaNumeric(itemDeets.data.name);
-      const fileName = stripNonAlphaNumeric(
-        file.name.split(".").slice(0, -1).join(".")
-      );
-      const regex = new RegExp(fileName, "i");
-      return regex.test(videoFileName);
+      const videoFilename = itemDeets.data.name;
+      const subtitleFilename = file.name;
+
+      const videoNormalised = normalise(videoFilename);
+      const subtitleNormalised = normalise(subtitleFilename);
+
+      const score = fuzzy(videoNormalised, subtitleNormalised);
+      return score > 0.9;
     })
-    .map((file) => {
-      // ensure it matches a language, then provide that language in the response
-      const match = file.name.match(re_lang);
-      if (!match) {
-        console.warn(
-          `Subtitle file ${file.name} does not match a language code, using default (eng)`
-        );
-        return {
-          ...file,
-          langCode: "eng",
-        };
-      }
-      return {
-        ...file,
-        langCode: match[1],
-      };
-    })
-    .map((file) => {
+    .map(function mapToSubtitle(file) {
       if (!file.link) {
         return undefined;
       }
-
-      return {
-        id: `${prefix}:${fileId}:subtitle`,
-        lang: file.langCode,
+      const langMatch = file.name.match(re_lang);
+      const lang = langMatch ? langMatch[1] : "eng";
+      const langCode = langMap.has(lang) ? lang : "eng";
+      const subtitle: Subtitle = {
+        id: `${prefix}:${file.id}:subtitle`,
+        lang: langCode,
         url: file.link,
       };
+
+      return subtitle;
     })
     .filter((file) => !!file);
 
