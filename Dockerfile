@@ -1,13 +1,39 @@
-FROM node:22.14.0
+FROM node:24-bookworm-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-ENV NODE_ENV=production
-
-RUN apt-get update && apt-get install -y git build-essential
-
+# deps
+FROM base AS deps
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git build-essential ca-certificates curl openssl \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 
 COPY . .
+RUN pnpm install --frozen-lockfile
 
-RUN npm install -g pnpm@10.5.0 && pnpm install
+# build
+FROM deps AS build
+WORKDIR /app
 
-RUN pnpm build
+RUN pnpm --filter @stremio-addon/database prisma generate
+RUN pnpm -r build
+
+# runtime
+FROM node:24-bookworm-slim AS runner
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+WORKDIR /app
+
+# copy runtime node_modules and built artifacts
+COPY --from=deps /app/node_modules /app/node_modules
+COPY --from=build /app /app
+
+# Environment: keep DB config out of the image; pass at runtime
+ENV NODE_ENV=production
+
+CMD ["pnpm", "start"]
