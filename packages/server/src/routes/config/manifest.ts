@@ -25,7 +25,7 @@ manifestRouter.get("/", async (c) => {
     stremioAddonsConfig: {
       issuer: "https://stremio-addons.net",
       signature:
-        "eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..EwvsQZVLc0DqlifEiTI_GQ.oF-cEJiXs0x0I2BrVgU9iwPcXknAvYV9OxI2tsxaA3tLyCRA1NzLnkWxbNRMiuQK1esOqAzXslxJwfm4Hy3W5Frzlpwtt2X26P0z6121Ga_2MpfZNfrF3lIVPWyZZ6rR.HZPw-F1Qc3A7wPBetRsWSA",
+        "eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..fzq4vqD9JBY5JZsjRDf-yQ.4z5MVPWOWwqqDDVN1r-M2AEfe0hj5EO5xu07C6MMQfFM9gzeZwOkdpTTfmSZ3qGYKVNvMo0rrhY4NIgQVNY7DeXdTAqRqj2efXAe6goqPiycgZBoTvM5d7HqdVCksUg6.wB2yNc5A3mga-_NEljyYAQ",
     },
   });
 
