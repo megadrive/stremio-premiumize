@@ -21,13 +21,10 @@ manifestRouter.get("/", async (c) => {
     ...addonManifest,
     idPrefixes: [`${prefix}:`],
     logo: `${c.var.config.baseUrl}/logo.png`,
-    // @ts-expect-error - stremio-addons.net verification
-    stremioAddonsConfig: {
-      issuer: "https://stremio-addons.net",
-      signature:
-        "eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..fzq4vqD9JBY5JZsjRDf-yQ.4z5MVPWOWwqqDDVN1r-M2AEfe0hj5EO5xu07C6MMQfFM9gzeZwOkdpTTfmSZ3qGYKVNvMo0rrhY4NIgQVNY7DeXdTAqRqj2efXAe6goqPiycgZBoTvM5d7HqdVCksUg6.wB2yNc5A3mga-_NEljyYAQ",
-    },
   });
+
+  // remove the stremioAddonsConfig for the user-facing manifest
+  delete manifest.stremioAddonsConfig;
 
   // long-lived header
   c.header("Cache-Control", `max-age: ${SIX_MONTHS}`);

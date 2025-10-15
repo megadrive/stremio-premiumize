@@ -2,6 +2,13 @@ import { prefix } from "@/consts.js";
 import { serverEnv } from "@stremio-addon/env";
 import type { Manifest } from "stremio-addon-sdk";
 
+type ManifestExtended = Manifest & {
+  stremioAddonsConfig?: {
+    issuer: string;
+    signature: string;
+  };
+};
+
 /**
  * The manifest base of the addon.
  *
@@ -9,7 +16,7 @@ import type { Manifest } from "stremio-addon-sdk";
  *
  * ! You do not have to edit anything in this object.
  */
-const manifestBase: Manifest = {
+const manifestBase: ManifestExtended = {
   id: "",
   name: "",
   description: "",
@@ -23,7 +30,9 @@ const manifestBase: Manifest = {
  * Create a new manifest.
  * NOTE: Remember that each "call" to your addon runs in isolation. There is no "app state" aside from the config sent in the URL.
  */
-export const createManifest = (opts: Partial<Manifest> = {}): Manifest => {
+export const createManifest = (
+  opts: Partial<Manifest> = {}
+): ManifestExtended => {
   return {
     ...manifestBase,
     ...opts,
@@ -42,6 +51,7 @@ export const addonManifest = createManifest({
   version: `1.0.0${serverEnv.isDevelopment ? "-dev" : ""}`,
   description: "Access your Premiumize cloud library",
   types: ["series"],
+  logo: `${serverEnv.BASE_URL}/logo.png`,
   resources: [
     "meta",
     "catalog",
@@ -68,4 +78,9 @@ export const addonManifest = createManifest({
     },
   ],
   idPrefixes: [`${prefix}:`],
+  stremioAddonsConfig: {
+    issuer: "https://stremio-addons.net",
+    signature:
+      "eyJhbGciOiJkaXIiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0..fzq4vqD9JBY5JZsjRDf-yQ.4z5MVPWOWwqqDDVN1r-M2AEfe0hj5EO5xu07C6MMQfFM9gzeZwOkdpTTfmSZ3qGYKVNvMo0rrhY4NIgQVNY7DeXdTAqRqj2efXAe6goqPiycgZBoTvM5d7HqdVCksUg6.wB2yNc5A3mga-_NEljyYAQ",
+  },
 });
