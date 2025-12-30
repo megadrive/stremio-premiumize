@@ -3,3 +3,9 @@ packages:
   - packages/env
   - packages/frontend
   - packages/server
+
+ignoredBuiltDependencies:
+  - sharp
+
+onlyBuiltDependencies:
+  - esbuild
