@@ -4,6 +4,7 @@ import { fetchFolder, search as searchRemote } from "@/lib/premiumize.js";
 import { addonManifest } from "@/util/manifest.js";
 import { prefix } from "@/consts.js";
 import isVideoFile from "@/util/isVideoFile.js";
+import { INTERNAL_SERVER_ERROR, NOT_FOUND } from "stoker/http-status-codes";
 
 export const catalogRouter = createRouter();
 
@@ -28,7 +29,7 @@ catalogRouter.get("/:type/:id.json", async (c) => {
   const folderResult = await fetchFolder(c.var.config.premiumizeApiKey);
 
   if (!folderResult?.success) {
-    return c.json({ error: "Failed to fetch folder" });
+    return c.json({ error: "Failed to fetch folder" }, INTERNAL_SERVER_ERROR);
   }
 
   const folder = folderResult.data;
@@ -53,7 +54,7 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
   const search = c.req.param("search")?.split(".").slice(0, -1).join(".");
 
   if (!search) {
-    return c.json({ metas: [], error: "Missing search" });
+    return c.json({ metas: [], error: "Missing search" }, NOT_FOUND);
   }
 
   const [, q] = search.replace(`.json$`, "").split("=");
@@ -91,5 +92,5 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
     c.var.logger.error(error);
   }
 
-  return c.json({ metas: [] });
+  return c.json({ metas: [] }, NOT_FOUND);
 });
