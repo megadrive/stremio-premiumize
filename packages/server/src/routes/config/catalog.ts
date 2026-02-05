@@ -1,6 +1,5 @@
 import { createRouter } from "@/util/createHono.js";
 import type { MetaDetail } from "stremio-addon-sdk";
-import { fetchFolder, search as searchRemote } from "@/lib/premiumize.js";
 import { addonManifest } from "@/util/manifest.js";
 import { prefix } from "@/consts.js";
 import isVideoFile from "@/util/isVideoFile.js";
@@ -25,29 +24,35 @@ function removeTags(name: string): string {
 
 // id = "premiumize:id"
 catalogRouter.get("/:type/:id.json", async (c) => {
-  // fetch the folder contents
-  const folderResult = await fetchFolder(c.var.config.premiumizeApiKey);
+  try {
+    // fetch the folder contents
+    const folder = await c.var.premiumize.listFolder();
 
-  if (!folderResult?.success) {
-    return c.json({ error: "Failed to fetch folder" }, INTERNAL_SERVER_ERROR);
+    console.info(
+      `[get] ${folder.folder_id}: ${folder.name} (${folder.content.length} items)`
+    );
+
+    const metas: MetaDetail[] = folder.content
+      .filter((item) => item.type === "folder" || isVideoFile(item.name))
+      .map((item) => {
+        const { name, icon } = prependIconToItemName(item.name, item.type);
+
+        return {
+          id: `${prefix}:${item.id}`,
+          name: c.var.config.hideFolderTags ? removeTags(name) : name,
+          type: addonManifest.types[0],
+          poster: `${c.var.config.baseUrl}/api/icon/${icon}/poster`,
+        };
+      });
+
+    return c.json({ metas });
+  } catch (error) {
+    console.error(error);
+    return c.json(
+      { error: "Failed to fetch folder contents" },
+      INTERNAL_SERVER_ERROR
+    );
   }
-
-  const folder = folderResult.data;
-
-  const metas: MetaDetail[] = folder.content
-    .filter((item) => item.type === "folder" || isVideoFile(item.name))
-    .map((item) => {
-      const { name, icon } = prependIconToItemName(item.name, item.type);
-
-      return {
-        id: `${prefix}:${item.id}`,
-        name: c.var.config.hideFolderTags ? removeTags(name) : name,
-        type: addonManifest.types[0],
-        poster: `${c.var.config.baseUrl}/api/icon/${icon}/poster`,
-      };
-    });
-
-  return c.json({ metas });
 });
 
 catalogRouter.get("/:type/:id/:search", async (c) => {
@@ -57,18 +62,12 @@ catalogRouter.get("/:type/:id/:search", async (c) => {
     return c.json({ metas: [], error: "Missing search" }, NOT_FOUND);
   }
 
-  const [, q] = search.replace(`.json$`, "").split("=");
+  const [, query] = search.replace(`.json$`, "").split("=");
 
   try {
-    const searchResultResult = await searchRemote(
-      c.var.config.premiumizeApiKey,
-      q
-    );
-    if (!searchResultResult?.success) {
-      throw new Error("Failed to search");
-    }
-
-    const searchResult = searchResultResult.data;
+    const searchResult = await c.var.premiumize.searchFolder({
+      query,
+    });
 
     const metas: MetaDetail[] = searchResult.content
       .filter((item) => item.type === "folder" || isVideoFile(item.name))

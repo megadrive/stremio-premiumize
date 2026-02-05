@@ -1,10 +1,11 @@
 import { prefix } from "@/consts.js";
-import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
+import { PremiumizeClient } from "@almosteffective/premiumize-api";
 import { createRouter } from "@/util/createHono.js";
 import type { Subtitle } from "stremio-addon-sdk";
 import { iso6392 } from "iso-639-2";
 import { z } from "zod";
 import { fuzzy } from "fast-fuzzy";
+import { to } from "await-to-js";
 
 export const subtitleRouter = createRouter();
 
@@ -55,7 +56,7 @@ const normalise = (filename: string) => {
 };
 
 subtitleRouter.get("/:type/:id.json", async (c) => {
-  const config = c.var.config;
+  const premiumizeApi = PremiumizeClient.create(c.var.config.premiumizeApiKey);
 
   const id = c.req.param("id.json");
   const fileId = id.split(":")[1]?.replace(/\.json$/, "");
@@ -64,19 +65,22 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
     return c.json({ error: "Invalid file ID" }, 400);
   }
 
-  const itemDeets = await itemDetails(config.premiumizeApiKey, fileId);
-  if (!itemDeets.success) {
+  const [itemDeetsErr, itemDeets] = await to(
+    premiumizeApi.getItemDetails({ id: fileId })
+  );
+  if (itemDeetsErr || !itemDeets) {
     return c.json({ error: `Item not found: ${fileId}` }, 404);
   }
-  const folderId = itemDeets.data.folder_id;
+  const folderId = itemDeets.folder_id;
 
   // grab the item to get its parent folder, then get all subtitle files based on the filename of the video item
   // fetch the folder contents
-  const folderResult = await fetchFolder(config.premiumizeApiKey, folderId);
-  if (!folderResult.success) {
+  const [folderErr, folder] = await to(
+    premiumizeApi.listFolder({ id: folderId })
+  );
+  if (folderErr || !folder) {
     return c.json({ error: `Folder not found: ${fileId}` }, 404);
   }
-  const folder = folderResult.data;
 
   // find all subtitles in the folder
   const exts = ["srt", "vtt"];
@@ -87,7 +91,7 @@ subtitleRouter.get("/:type/:id.json", async (c) => {
       return ext && exts.includes(ext);
     })
     .filter(function matchWithFileBestGuess(file) {
-      const videoFilename = itemDeets.data.name;
+      const videoFilename = itemDeets.name;
       const subtitleFilename = file.name;
 
       const videoNormalised = normalise(videoFilename);

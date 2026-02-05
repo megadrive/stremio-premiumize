@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import type { PinoLogger } from "hono-pino";
 import { notFound, onError, serveEmojiFavicon } from "stoker/middlewares";
 import { parseConfigFromUrl } from "@/middleware/parseConfigFromUrl.js";
+import type { PremiumizeClient } from "@almosteffective/premiumize-api";
 
 type AppBindings = {
   Variables: {
@@ -15,6 +16,7 @@ type AppBindings = {
 export type AppBindingsWithConfig = AppBindings & {
   Variables: {
     config: Config;
+    premiumize: PremiumizeClient;
   };
 };
 

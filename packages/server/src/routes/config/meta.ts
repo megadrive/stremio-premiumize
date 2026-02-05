@@ -1,10 +1,10 @@
-import { fetchFolder, itemDetails } from "@/lib/premiumize.js";
 import { fetchFolderSettings } from "@/lib/helpers.js";
 import { createRouter } from "@/util/createHono.js";
 import { addonManifest } from "@/util/manifest.js";
 import type { MetaDetail, MetaLink, MetaVideo } from "stremio-addon-sdk";
 import { prefix } from "@/consts.js";
 import isVideoFile from "@/util/isVideoFile.js";
+import { to } from "await-to-js";
 
 // should match: /:config/meta/:type/:id/:extras?.json
 // ex: /configexample/meta/movie/123456.json
@@ -23,42 +23,41 @@ metaRouter.get("/:type/:id", async (c) => {
     return c.json({ error: "Invalid id" }, 500);
   }
 
-  const folderResult = await fetchFolder(c.var.config.premiumizeApiKey, id);
-  if (!folderResult?.success) {
+  const [folderErr, folder] = await to(c.var.premiumize.listFolder({ id }));
+  if (folderErr) {
     // it may be a file, so try to fetch it
-    const fileResult = await itemDetails(c.var.config.premiumizeApiKey, id);
-    if (fileResult?.success) {
-      const file = fileResult.data;
-      const meta: MetaDetail = {
-        id: `${prefix}:${file.id}`,
-        name: file.name,
-        description: file.name,
-        releaseInfo: `Size: ${file.size}`,
-        // we know it's a single video file, but we need to treat it as a series
-        type: "series",
-        videos: [
-          {
-            id: `${prefix}:${file.id}:video`,
-            // @ts-expect-error name is a new prop
-            name: file.name,
-            released: new Date(file.created_at ?? Date.now()).toISOString(),
-            available: true,
-            rating: "0",
-            season: 0,
-            episode: 1,
-          },
-        ],
-      };
-      return c.json({ meta });
+    const [fileErr, file] = await to(c.var.premiumize.getItemDetails({ id }));
+    if (fileErr) {
+      return c.json({ meta: {}, error: "Failed to fetch file info" }, 500);
     }
 
-    return c.json({ meta: {}, error: "Failed to fetch file info" }, 500);
+    const meta: MetaDetail = {
+      id: `${prefix}:${file.id}`,
+      name: file.name,
+      description: file.name,
+      releaseInfo: `Size: ${file.size}`,
+      // we know it's a single video file, but we need to treat it as a series
+      type: "series",
+      videos: [
+        {
+          id: `${prefix}:${file.id}:video`,
+          // @ts-expect-error name is a new prop
+          name: file.name,
+          released: new Date(file.created_at ?? Date.now()).toISOString(),
+          available: true,
+          rating: "0",
+          season: 0,
+          episode: 1,
+        },
+      ],
+    };
+
+    return c.json({ meta });
   }
 
   const links: MetaLink[] = [];
 
   // if we are in a subfolder, add a link to the parent folder
-  const folder = folderResult.data;
   if (folder.parent_id && folder.name !== "root") {
     links.push({
       name: "^ Up a directory",

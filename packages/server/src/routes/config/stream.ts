@@ -5,6 +5,7 @@ import { createRouter } from "@/util/createHono.js";
 import { serverEnv } from "@stremio-addon/env";
 import type { Stream, Subtitle } from "stremio-addon-sdk";
 import { z } from "zod";
+import { to } from "await-to-js";
 
 export const streamRouter = createRouter();
 
@@ -99,16 +100,16 @@ streamRouter.get("/:type/:id", async (c) => {
     const streams: Stream[] = [];
     const detailPromises = await Promise.allSettled(
       searchResult.content.map(async (item) => {
-        const itemResult = await itemDetails(
-          c.var.config.premiumizeApiKey,
-          item.id
+        const [detailsErr, details] = await to(
+          c.var.premiumize.getItemDetails({
+            id: item.id,
+          })
         );
 
-        if (!itemResult.success) {
+        if (detailsErr) {
           return undefined;
         }
 
-        const details = itemResult.data;
         if (details.type !== "file") {
           return undefined;
         }
@@ -153,9 +154,11 @@ streamRouter.get("/:type/:id", async (c) => {
             });
         }
 
+        console.debug(`found stream`, details);
+
         const stream: Stream = {
           title: `${details.stream_link ? "⚡ " : ""}${details.name}`,
-          url: details.stream_link ?? details.link,
+          url: details.stream_link ?? details.link ?? undefined,
           subtitles,
           behaviorHints: {
             notWebReady: !testIsWebReady(details),
@@ -183,16 +186,17 @@ streamRouter.get("/:type/:id", async (c) => {
   // handle #tv shows
   if (special && special.toLowerCase() === "tv") {
     // fetch the item directly
-    const itemResult = await itemDetails(c.var.config.premiumizeApiKey, id);
-    if (!itemResult.success) {
+    const [detailsErr, details] = await to(
+      c.var.premiumize.getItemDetails({ id })
+    );
+    if (detailsErr) {
       return c.json({ meta: {}, error: "Failed to fetch item" }, 500);
     }
-    const item = itemResult.data;
     const stream: Stream = {
-      title: `${item.stream_link ? "⚡ " : ""}${item.name}`,
-      url: item.stream_link ?? item.link,
+      title: `${details.stream_link ? "⚡ " : ""}${details.name}`,
+      url: details.stream_link ?? details.link ?? undefined,
       behaviorHints: {
-        notWebReady: !testIsWebReady(item),
+        notWebReady: !testIsWebReady(details),
       },
     };
     return c.json({ streams: [stream] });
@@ -215,11 +219,10 @@ streamRouter.get("/:type/:id", async (c) => {
     return c.json({ streams: [stream] });
   }
 
-  const folderResult = await fetchFolder(c.var.config.premiumizeApiKey, id);
-  if (!folderResult?.success) {
+  const [folderErr, folder] = await to(c.var.premiumize.listFolder({ id }));
+  if (folderErr) {
     return c.json({ meta: {}, error: "Failed to fetch folder" }, 500);
   }
-  const folder = folderResult.data;
 
   let folderStreams: Stream[] = [];
   c.var.logger.debug(c.var.config);
@@ -242,6 +245,7 @@ streamRouter.get("/:type/:id", async (c) => {
   }
 
   const videoStreams: Stream[] = folder.content
+    .filter((item) => item.type === "file")
     .filter((item) => {
       return item.link || item.stream_link;
     })
@@ -266,7 +270,7 @@ streamRouter.get("/:type/:id", async (c) => {
       });
 
       const subtitles: Subtitle[] = [];
-      if (subtitle) {
+      if (subtitle && subtitle.type === "file") {
         // early exit if we don't the right props
         if (!subtitle.link || !subtitle.name) {
           return;
@@ -285,11 +289,13 @@ streamRouter.get("/:type/:id", async (c) => {
 
       const isWebReady = testIsWebReady(item);
 
+      console.debug(`found stream`, item);
+
       return {
         id: `${prefix}:${item.id}`,
         title: item.name,
-        type: item.type === "folder" ? "series" : "movie",
-        url: item.stream_link ?? item.link,
+        type: "series",
+        url: item.stream_link ?? item.link ?? undefined,
         subtitles,
         behaviorHints: {
           notWebReady: !isWebReady,
